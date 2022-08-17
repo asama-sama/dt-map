@@ -1,6 +1,14 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet";
+import { Suburb, GeoJson } from "../../types";
 
-export const Map = () => {
+export const Map = ({ suburbs }: { suburbs?: Suburb[] }) => {
+  const suburbGeojson: GeoJson[] = [];
+  suburbs &&
+    suburbs.forEach((suburb) => {
+      Object.keys(suburb.geoData).forEach((suburbKey) => {
+        suburbGeojson.push(suburb.geoData[suburbKey].geojson);
+      });
+    });
   return (
     <MapContainer
       center={[-33.879, 151.1818]}
@@ -17,6 +25,10 @@ export const Map = () => {
           A pretty CSS3 popup. <br /> Easily customizable.
         </Popup>
       </Marker>
+      {suburbGeojson &&
+        suburbGeojson.map((suburb, i) => {
+          return <GeoJSON data={suburb} key={`suburb-${i}`}></GeoJSON>;
+        })}
     </MapContainer>
   );
 };
