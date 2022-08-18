@@ -1,9 +1,5 @@
 import { MapContainer, TileLayer, Popup, GeoJSON } from "react-leaflet";
-import {
-  SuburbAggregateEmissionRanged,
-  SuburbAggregateEmission,
-  GeoJson,
-} from "../../types";
+import { SuburbAggregateEmissionRanged, GeoJson } from "../../types";
 import Color from "colorjs.io";
 
 interface SuburbsCombined extends SuburbAggregateEmissionRanged {

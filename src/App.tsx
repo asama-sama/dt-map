@@ -4,15 +4,13 @@ import "./App.css";
 import { Map } from "./components/Map";
 import {
   EmissionsAggregate,
-  getEmissions,
   getEmissionsAggregate,
 } from "./requests/emissions";
 import { getSuburbs } from "./requests/suburbs";
-import { Suburb, Emission, SuburbAggregateEmission } from "./types";
+import { Suburb, SuburbAggregateEmission } from "./types";
 import { applyRange } from "./util";
 
 function App() {
-  const [emissions, setEmissions] = useState<Emission[]>([]);
   const [emissionsAggregate, setEmissionsAggregate] = useState<
     EmissionsAggregate[]
   >([]);
