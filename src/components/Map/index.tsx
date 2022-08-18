@@ -1,11 +1,20 @@
 import { MapContainer, TileLayer, Popup, GeoJSON } from "react-leaflet";
-import { SuburbAggregateEmission, GeoJson } from "../../types";
+import {
+  SuburbAggregateEmissionRanged,
+  SuburbAggregateEmission,
+  GeoJson,
+} from "../../types";
+import Color from "colorjs.io";
 
-interface SuburbsCombined extends SuburbAggregateEmission {
+interface SuburbsCombined extends SuburbAggregateEmissionRanged {
   geojson: GeoJson;
 }
 
-export const Map = ({ suburbs }: { suburbs: SuburbAggregateEmission[] }) => {
+export const Map = ({
+  suburbs,
+}: {
+  suburbs: SuburbAggregateEmissionRanged[];
+}) => {
   const suburbsAggregateEmissionsCombined: SuburbsCombined[] = [];
   suburbs.forEach((suburb) => {
     // combine suburbs with multiple polygons
@@ -27,6 +36,11 @@ export const Map = ({ suburbs }: { suburbs: SuburbAggregateEmission[] }) => {
       },
     });
   });
+  const color = new Color("p3", [0, 1, 0]);
+  const redgreen = color.range("red", {
+    space: "lch", // interpolation space
+    outputSpace: "srgb",
+  });
   return (
     <MapContainer
       center={[-33.879, 151.1818]}
@@ -43,7 +57,7 @@ export const Map = ({ suburbs }: { suburbs: SuburbAggregateEmission[] }) => {
           <GeoJSON
             data={suburb.geojson}
             key={`suburb-${i}`}
-            style={{ color: "rgb(80.9% 65.9% -29%)" }}
+            style={{ color: redgreen(suburb.readingRanged) }}
           >
             <Popup>
               <div>

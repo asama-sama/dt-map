@@ -34,6 +34,10 @@ export interface SuburbAggregateEmission extends Suburb {
   reading?: number;
 }
 
+export interface SuburbAggregateEmissionRanged extends SuburbAggregateEmission {
+  readingRanged?: number;
+}
+
 export type Emission = {
   reading: number;
 

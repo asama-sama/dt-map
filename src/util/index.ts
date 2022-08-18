@@ -1,8 +1,5 @@
 import { SuburbAggregateEmission } from "../types";
-
-interface SuburbAggregateEmissionRanged extends SuburbAggregateEmission {
-  readingRanged?: number;
-}
+import { SuburbAggregateEmissionRanged } from "../types";
 
 export const applyRange = (suburbs: SuburbAggregateEmission[]) => {
   let min = 999e5;

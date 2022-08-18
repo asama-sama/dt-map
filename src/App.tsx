@@ -9,6 +9,7 @@ import {
 } from "./requests/emissions";
 import { getSuburbs } from "./requests/suburbs";
 import { Suburb, Emission, SuburbAggregateEmission } from "./types";
+import { applyRange } from "./util";
 
 function App() {
   const [emissions, setEmissions] = useState<Emission[]>([]);
@@ -42,9 +43,11 @@ function App() {
     }
   );
 
+  const suburbAggregateEmissionsRanged = applyRange(suburbAggregateEmissions);
+
   return (
     <div className="App">
-      <Map suburbs={suburbAggregateEmissions}></Map>
+      <Map suburbs={suburbAggregateEmissionsRanged}></Map>
     </div>
   );
 }
