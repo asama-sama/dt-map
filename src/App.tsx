@@ -8,7 +8,7 @@ import {
   getEmissionsAggregate,
 } from "./requests/emissions";
 import { getSuburbs } from "./requests/suburbs";
-import { Suburb, Emission, SuburbAggregateEmissions } from "./types";
+import { Suburb, Emission, SuburbAggregateEmission } from "./types";
 
 function App() {
   const [emissions, setEmissions] = useState<Emission[]>([]);
@@ -31,7 +31,7 @@ function App() {
     fetchData();
   }, []);
 
-  const suburbAggregateEmissions: SuburbAggregateEmissions[] = suburbs.map(
+  const suburbAggregateEmissions: SuburbAggregateEmission[] = suburbs.map(
     (suburb) => {
       return {
         ...suburb,

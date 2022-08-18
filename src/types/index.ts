@@ -30,7 +30,7 @@ export type Suburb = {
   geoData: SuburbJson;
 };
 
-export interface SuburbAggregateEmissions extends Suburb {
+export interface SuburbAggregateEmission extends Suburb {
   reading?: number;
 }
 
