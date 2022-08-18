@@ -2,20 +2,28 @@ import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 import { Map } from "./components/Map";
-import { getEmissions } from "./requests/emissions";
-import { Suburb, Emission } from "./types";
+import {
+  EmissionsAggregate,
+  getEmissions,
+  getEmissionsAggregate,
+} from "./requests/emissions";
+import { getSuburbs } from "./requests/suburbs";
+import { Suburb, Emission, SuburbAggregateEmissions } from "./types";
 
 function App() {
-  const [emissions, setEmissions] = useState<Emission[]>();
-  const [suburbs, setSuburbs] = useState<Suburb[]>();
+  const [emissions, setEmissions] = useState<Emission[]>([]);
+  const [emissionsAggregate, setEmissionsAggregate] = useState<
+    EmissionsAggregate[]
+  >([]);
+  const [suburbs, setSuburbs] = useState<Suburb[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getEmissions();
-        console.log(data);
-        setEmissions(data.emissions);
-        setSuburbs(data.suburbs);
+        const suburbs = await getSuburbs();
+        setSuburbs(suburbs);
+        const emissionsAggregate = await getEmissionsAggregate();
+        setEmissionsAggregate(emissionsAggregate);
       } catch (e) {
         console.error(e);
       }
@@ -23,9 +31,20 @@ function App() {
     fetchData();
   }, []);
 
+  const suburbAggregateEmissions: SuburbAggregateEmissions[] = suburbs.map(
+    (suburb) => {
+      return {
+        ...suburb,
+        reading: emissionsAggregate.find(
+          (emmAgg) => emmAgg.suburbId === suburb.id
+        )?.suburbAggregateEmission,
+      };
+    }
+  );
+
   return (
     <div className="App">
-      <Map suburbs={suburbs}></Map>
+      <Map suburbs={suburbAggregateEmissions}></Map>
     </div>
   );
 }

@@ -23,14 +23,16 @@ export type SuburbJson = {
 };
 
 export type Suburb = {
+  id: number;
   name: string;
-
   shapeArea: number;
-
   shapeLength: number;
-
   geoData: SuburbJson;
 };
+
+export interface SuburbAggregateEmissions extends Suburb {
+  reading?: number;
+}
 
 export type Emission = {
   reading: number;
@@ -41,3 +43,8 @@ export type Emission = {
 
   categoryId: number;
 };
+
+export interface EmissionsAggregate extends Emission {
+  suburbId: number;
+  suburbAggregateEmission: number;
+}
