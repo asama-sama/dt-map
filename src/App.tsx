@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import "leaflet/dist/leaflet.css";
-import "./App.css";
 import { Map } from "./components/Map";
 import { getEmissions, getYears } from "./requests/emissions";
 import { getSuburbs } from "./requests/suburbs";
@@ -12,8 +10,12 @@ import {
 } from "./types";
 import { applyRange } from "./util";
 import Slider from "rc-slider";
-import "rc-slider/assets/index.css";
 import { getCategories } from "./requests/categories";
+
+import "leaflet/dist/leaflet.css";
+import "rc-slider/assets/index.css";
+import "./App.css";
+import MapControlStyles from "./MapControls.css";
 
 function App() {
   type DataView = "aggregate" | "yearly";
@@ -120,11 +122,15 @@ function App() {
           ></input>
         </label>
       </div>
-      <div>
+      <div className={"MapToggles"}>
         {categoryToggles.map((categoryToggle, i) => (
-          <label key={`cat-${i}`}>
-            {categoryToggle.name}
+          <div key={`toggle-${i}`} className="Selection">
+            <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
+              {categoryToggle.name}
+            </label>
             <input
+              id={`toggle-${i}`}
+              name={`toggle-${i}`}
               type="checkbox"
               value={categoryToggle.id}
               checked={categoryToggle.on}
@@ -144,7 +150,7 @@ function App() {
                 setCategoryToggles(newCategoriesToggles);
               }}
             ></input>
-          </label>
+          </div>
         ))}
       </div>
       {dataView === "yearly" ? (

@@ -43,4 +43,24 @@
 .App {
   width: 800px;
   height: 700px;
+  position: relative;
+}
+
+.MapToggles {
+  position: absolute;
+  left: 0;
+  top: 200px;
+  z-index: 10000;
+  background: #00000082;
+  user-select: none;
+}
+
+.Selection {
+  display: flex;
+  justify-content: space-between;
+}
+
+.Selection input,
+.Selection label {
+  cursor: pointer;
 }
