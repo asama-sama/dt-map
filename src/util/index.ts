@@ -1,7 +1,6 @@
-import { SuburbAggregateEmission } from "../types";
-import { SuburbAggregateEmissionRanged } from "../types";
+import { SuburbWithData } from "../types";
 
-export const applyRange = (suburbs: SuburbAggregateEmission[]) => {
+export const applyRange = (suburbs: SuburbWithData[]) => {
   let min = 999e5;
   let max = 0;
   suburbs.forEach((suburb) => {
@@ -9,12 +8,11 @@ export const applyRange = (suburbs: SuburbAggregateEmission[]) => {
     if (reading && reading < min) min = reading;
     if (reading && reading > max) max = reading;
   });
-  const suburbAggregateEmissionRanged: SuburbAggregateEmissionRanged[] =
-    suburbs.map((suburb) => {
-      return {
-        ...suburb,
-        readingRanged: suburb.reading && (suburb.reading - min) / (max - min),
-      };
-    });
+  const suburbAggregateEmissionRanged = suburbs.map((suburb) => {
+    return {
+      ...suburb,
+      readingNormalised: suburb.reading && (suburb.reading - min) / (max - min),
+    };
+  });
   return suburbAggregateEmissionRanged;
 };

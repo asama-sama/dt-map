@@ -30,12 +30,13 @@ export type Suburb = {
   geoData: SuburbJson;
 };
 
-export interface SuburbAggregateEmission extends Suburb {
-  reading?: number;
-}
+export type SuburbsIndexed = {
+  [key: number]: Suburb;
+};
 
-export interface SuburbAggregateEmissionRanged extends SuburbAggregateEmission {
-  readingRanged?: number;
+export interface SuburbWithData extends Suburb {
+  reading?: number;
+  readingNormalised?: number;
 }
 
 export type Emission = {
@@ -52,3 +53,7 @@ export interface EmissionsAggregate extends Emission {
   suburbId: number;
   suburbAggregateEmission: number;
 }
+
+export type YearSuburbMap = {
+  [key: string]: Emission[];
+};

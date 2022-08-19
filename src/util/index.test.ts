@@ -1,4 +1,4 @@
-import { SuburbAggregateEmission } from "../types";
+import { SuburbWithData } from "../types";
 import { applyRange } from "./";
 
 describe("utils", () => {
@@ -6,7 +6,7 @@ describe("utils", () => {
   const expectedValues = [0, 0.077236, 0.1626, 1, 0.3902];
 
   test("applyRange", () => {
-    let emissions: SuburbAggregateEmission[] = [];
+    let emissions: SuburbWithData[] = [];
 
     emissions = values.map((value) => ({
       reading: value,
@@ -17,8 +17,9 @@ describe("utils", () => {
       shapeLength: 0,
     }));
     const results = applyRange(emissions);
+    console.log(results);
     results.forEach((result, i) => {
-      expect(result.readingRanged).toBeCloseTo(expectedValues[i]);
+      expect(result.readingNormalised).toBeCloseTo(expectedValues[i]);
     });
   });
 });
