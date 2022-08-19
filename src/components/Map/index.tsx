@@ -29,7 +29,9 @@ export const Map = ({ suburbs }: { suburbs: SuburbWithData[] }) => {
             >
               <Popup>
                 <div>
-                  <b>{suburb.name}</b>
+                  <b>
+                    {suburb.id}: {suburb.name}
+                  </b>
                   <div>{suburb.reading}</div>
                 </div>
               </Popup>

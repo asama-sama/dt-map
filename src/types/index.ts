@@ -49,11 +49,11 @@ export type Emission = {
   categoryId: number;
 };
 
-export interface EmissionsAggregate extends Emission {
-  suburbId: number;
-  suburbAggregateEmission: number;
-}
-
-export type YearSuburbMap = {
-  [key: string]: Emission[];
+export type Category = {
+  id: number;
+  name: string;
 };
+
+export interface CategoryToggle extends Category {
+  on: boolean;
+}
