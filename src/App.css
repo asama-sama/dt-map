@@ -41,6 +41,11 @@
 }
 
 .App {
+  display: grid;
+  grid-template-columns: 800px 150px;
+}
+
+.MapContainer {
   width: 800px;
   height: 700px;
   position: relative;
@@ -63,4 +68,9 @@
 .Selection input,
 .Selection label {
   cursor: pointer;
+}
+
+.Rank {
+  white-space: nowrap;
+  text-align: left;
 }

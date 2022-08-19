@@ -15,7 +15,6 @@ import { getCategories } from "./requests/categories";
 import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
 import "./App.css";
-import MapControlStyles from "./MapControls.css";
 
 function App() {
   type DataView = "aggregate" | "yearly";
@@ -93,6 +92,9 @@ function App() {
     .filter((suburbWithdata) => suburbWithdata.geoData && suburbWithdata.id);
 
   suburbsWithData = applyRange(suburbsWithData);
+  suburbsWithData.sort((s1, s2) =>
+    s1.reading && s2.reading ? s1.reading - s2.reading : 0
+  );
   years.forEach((year) => {
     if (year < sliderProps.min) sliderProps.min = year;
     if (year > sliderProps.max) sliderProps.max = year;
@@ -101,74 +103,84 @@ function App() {
 
   return (
     <div className="App">
-      <Map suburbs={suburbsWithData}></Map>
-      <div>
-        <label>
-          Aggregate
-          <input
-            type="radio"
-            name="dataSelection"
-            onChange={() => handleToggleDataView("aggregate")}
-            checked={dataView === "aggregate"}
-          ></input>
-        </label>
-        <label>
-          Yearly
-          <input
-            type="radio"
-            name="dataSelection"
-            onChange={() => handleToggleDataView("yearly")}
-            checked={dataView === "yearly"}
-          ></input>
-        </label>
-      </div>
-      <div className={"MapToggles"}>
-        {categoryToggles.map((categoryToggle, i) => (
-          <div key={`toggle-${i}`} className="Selection">
-            <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
-              {categoryToggle.name}
-            </label>
+      <div className="MapContainer">
+        <Map suburbs={suburbsWithData}></Map>
+        <div>
+          <label>
+            Aggregate
             <input
-              id={`toggle-${i}`}
-              name={`toggle-${i}`}
-              type="checkbox"
-              value={categoryToggle.id}
-              checked={categoryToggle.on}
-              onChange={(e) => {
-                const newCategoriesToggles = categoryToggles.map(
-                  (categoryToggle, j) => {
-                    if (i === j) {
-                      return {
-                        ...categoryToggle,
-                        on: e.target.checked,
-                      };
-                    } else {
-                      return categoryToggle;
-                    }
-                  }
-                );
-                setCategoryToggles(newCategoriesToggles);
-              }}
+              type="radio"
+              name="dataSelection"
+              onChange={() => handleToggleDataView("aggregate")}
+              checked={dataView === "aggregate"}
             ></input>
+          </label>
+          <label>
+            Yearly
+            <input
+              type="radio"
+              name="dataSelection"
+              onChange={() => handleToggleDataView("yearly")}
+              checked={dataView === "yearly"}
+            ></input>
+          </label>
+        </div>
+        <div className={"MapToggles"}>
+          {categoryToggles.map((categoryToggle, i) => (
+            <div key={`toggle-${i}`} className="Selection">
+              <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
+                {categoryToggle.name}
+              </label>
+              <input
+                id={`toggle-${i}`}
+                name={`toggle-${i}`}
+                type="checkbox"
+                value={categoryToggle.id}
+                checked={categoryToggle.on}
+                onChange={(e) => {
+                  const newCategoriesToggles = categoryToggles.map(
+                    (categoryToggle, j) => {
+                      if (i === j) {
+                        return {
+                          ...categoryToggle,
+                          on: e.target.checked,
+                        };
+                      } else {
+                        return categoryToggle;
+                      }
+                    }
+                  );
+                  setCategoryToggles(newCategoriesToggles);
+                }}
+              ></input>
+            </div>
+          ))}
+        </div>
+        {dataView === "yearly" ? (
+          <Slider
+            marks={sliderProps.marks}
+            step={null}
+            min={sliderProps.min}
+            max={sliderProps.max}
+            onChange={(year) => {
+              if (!Array.isArray(year)) {
+                setYear(year);
+              }
+            }}
+            value={year}
+          />
+        ) : (
+          <></>
+        )}
+      </div>
+      <div className="SuburbRankingPanel">
+        <b>Ranking</b>
+        {suburbsWithData.map((suburb, i) => (
+          <div key={`rankedSuburb-${i}`} className={"Rank"}>
+            {i + 1}: {suburb.name}
           </div>
         ))}
       </div>
-      {dataView === "yearly" ? (
-        <Slider
-          marks={sliderProps.marks}
-          step={null}
-          min={sliderProps.min}
-          max={sliderProps.max}
-          onChange={(year) => {
-            if (!Array.isArray(year)) {
-              setYear(year);
-            }
-          }}
-          value={year}
-        />
-      ) : (
-        <></>
-      )}
     </div>
   );
 }
