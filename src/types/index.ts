@@ -49,11 +49,11 @@ export type Emission = {
   categoryId: number;
 };
 
-export type Category = {
+export type Input = {
   id: number;
   name: string;
 };
 
-export interface CategoryToggle extends Category {
+export interface InputToggle extends Input {
   on: boolean;
 }

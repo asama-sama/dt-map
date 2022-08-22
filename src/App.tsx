@@ -2,12 +2,7 @@ import { useState, useEffect } from "react";
 import { Map } from "./components/Map";
 import { getEmissions, getYears } from "./requests/emissions";
 import { getSuburbs } from "./requests/suburbs";
-import {
-  SuburbsIndexed,
-  SuburbWithData,
-  CategoryToggle,
-  Emission,
-} from "./types";
+import { SuburbsIndexed, SuburbWithData, InputToggle, Emission } from "./types";
 import { applyRange } from "./util";
 import Slider from "rc-slider";
 import { getCategories } from "./requests/categories";
@@ -21,7 +16,19 @@ function App() {
 
   const [emissions, setEmissions] = useState<Emission[]>([]);
   const [suburbs, setSuburbs] = useState<SuburbsIndexed>({});
-  const [categoryToggles, setCategoryToggles] = useState<CategoryToggle[]>([]);
+  const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
+  const [sortToggles, setSortToggles] = useState<InputToggle[]>([
+    {
+      id: 1,
+      name: "Desc",
+      on: true,
+    },
+    {
+      id: 2,
+      name: "Asc",
+      on: false,
+    },
+  ]);
   const [dataView, setDataView] = useState<DataView>("aggregate");
   const [year, setYear] = useState<number>();
   const [years, setYears] = useState<number[]>([]);
@@ -34,12 +41,10 @@ function App() {
         suburbs.map((suburb) => (suburbsMap[suburb.id] = suburb));
         setSuburbs(suburbsMap);
         const categories = await getCategories();
-        const categoryToggles: CategoryToggle[] = categories.map(
-          (category) => ({
-            ...category,
-            on: true,
-          })
-        );
+        const categoryToggles: InputToggle[] = categories.map((category) => ({
+          ...category,
+          on: true,
+        }));
         setCategoryToggles(categoryToggles);
         const _years = await getYears();
         setYears(_years);
@@ -55,11 +60,14 @@ function App() {
       const categories = categoryToggles
         .filter((categoryToggle) => categoryToggle.on)
         .map((categoryToggle) => categoryToggle.id);
-      const _emissions = await getEmissions(categories, year);
+      const sort =
+        sortToggles.find((sortToggle) => sortToggle.on)?.name.toLowerCase() ||
+        "desc";
+      const _emissions = await getEmissions(categories, year, sort);
       setEmissions(_emissions);
     };
     fetchEmissions();
-  }, [year, categoryToggles]);
+  }, [year, categoryToggles, sortToggles]);
 
   const handleToggleDataView = (dataView: DataView) => {
     if (dataView === "aggregate") {
@@ -92,9 +100,7 @@ function App() {
     .filter((suburbWithdata) => suburbWithdata.geoData && suburbWithdata.id);
 
   suburbsWithData = applyRange(suburbsWithData);
-  suburbsWithData.sort((s1, s2) =>
-    s1.reading && s2.reading ? s1.reading - s2.reading : 0
-  );
+
   years.forEach((year) => {
     if (year < sliderProps.min) sliderProps.min = year;
     if (year > sliderProps.max) sliderProps.max = year;
@@ -106,24 +112,46 @@ function App() {
       <div className="MapContainer">
         <Map suburbs={suburbsWithData}></Map>
         <div>
-          <label>
-            Aggregate
-            <input
-              type="radio"
-              name="dataSelection"
-              onChange={() => handleToggleDataView("aggregate")}
-              checked={dataView === "aggregate"}
-            ></input>
-          </label>
-          <label>
-            Yearly
-            <input
-              type="radio"
-              name="dataSelection"
-              onChange={() => handleToggleDataView("yearly")}
-              checked={dataView === "yearly"}
-            ></input>
-          </label>
+          <div>
+            <label>
+              Aggregate
+              <input
+                type="radio"
+                name="dataSelection"
+                onChange={() => handleToggleDataView("aggregate")}
+                checked={dataView === "aggregate"}
+              ></input>
+            </label>
+            <label>
+              Yearly
+              <input
+                type="radio"
+                name="dataSelection"
+                onChange={() => handleToggleDataView("yearly")}
+                checked={dataView === "yearly"}
+              ></input>
+            </label>
+          </div>
+          <div>
+            {sortToggles.map((toggle, i) => (
+              <span key={`sortToggle-${i}`}>
+                <label htmlFor={toggle.name}>{toggle.name}</label>
+                <input
+                  type={"radio"}
+                  name={toggle.name}
+                  checked={toggle.on}
+                  onChange={(e) =>
+                    setSortToggles(
+                      sortToggles.map((sortToggle) => ({
+                        ...sortToggle,
+                        on: toggle.id === sortToggle.id && e.target.checked,
+                      }))
+                    )
+                  }
+                ></input>
+              </span>
+            ))}
+          </div>
         </div>
         <div className={"MapToggles"}>
           {categoryToggles.map((categoryToggle, i) => (
