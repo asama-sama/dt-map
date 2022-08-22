@@ -1,8 +1,53 @@
 import Color from "colorjs.io";
-import { MapContainer, TileLayer, Popup, GeoJSON } from "react-leaflet";
+import { GeoJSON as GeoJSONType } from "leaflet";
+import { useState } from "react";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import { SuburbWithData } from "../../types";
 
-export const Map = ({ suburbs }: { suburbs: SuburbWithData[] }) => {
+type ColoringProps = (number: number | undefined) => string;
+
+const GeoLayer = ({
+  suburb,
+  suburbName,
+  coloring,
+  active,
+}: {
+  suburb: SuburbWithData;
+  suburbName: string;
+  coloring: ColoringProps;
+  active: boolean;
+}) => {
+  const [ref, setRef] = useState<GeoJSONType>();
+
+  if (active) {
+    ref?.bindPopup(`${suburb.reading?.toFixed(2)}`);
+    ref?.openPopup();
+  }
+
+  return (
+    <GeoJSON
+      data={suburb.geoData[suburbName].geojson}
+      style={{ color: coloring(suburb.readingNormalised) }}
+      onEachFeature={(feature, layer) => {
+        const content = `<div>${suburb.reading}</div>`;
+        layer.bindPopup(content);
+      }}
+      ref={(r) => {
+        if (r) {
+          setRef(r);
+        }
+      }}
+    ></GeoJSON>
+  );
+};
+
+export const Map = ({
+  suburbs,
+  selectedSuburb,
+}: {
+  suburbs: SuburbWithData[];
+  selectedSuburb: number | undefined;
+}) => {
   const color = new Color("p3", [0, 1, 0]);
   const redgreen = color.range("red", {
     space: "lch", // interpolation space
@@ -21,22 +66,16 @@ export const Map = ({ suburbs }: { suburbs: SuburbWithData[] }) => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {sortedSuburbs.map((suburb) => {
+        const active = suburb.id === selectedSuburb;
         return Object.keys(suburb.geoData).map((suburbName, i) => {
           return (
-            <GeoJSON
-              data={suburb.geoData[suburbName].geojson}
-              key={`suburb-${suburb.id}-${i}`}
-              style={{ color: redgreen(suburb.readingNormalised) }}
-            >
-              <Popup>
-                <div>
-                  <b>
-                    {suburb.id}: {suburb.name}
-                  </b>
-                  <div>{suburb.reading}</div>
-                </div>
-              </Popup>
-            </GeoJSON>
+            <GeoLayer
+              suburb={suburb}
+              suburbName={suburbName}
+              coloring={redgreen}
+              key={`${suburbName},${i}`}
+              active={active}
+            />
           );
         });
       })}

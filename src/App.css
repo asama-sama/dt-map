@@ -73,4 +73,5 @@
 .Rank {
   white-space: nowrap;
   text-align: left;
+  cursor: pointer;
 }

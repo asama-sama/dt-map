@@ -16,6 +16,7 @@ function App() {
 
   const [emissions, setEmissions] = useState<Emission[]>([]);
   const [suburbs, setSuburbs] = useState<SuburbsIndexed>({});
+  const [selectedSuburb, setSelectedSuburb] = useState<number | undefined>();
   const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
   const [sortToggles, setSortToggles] = useState<InputToggle[]>([
     {
@@ -113,7 +114,7 @@ function App() {
   return (
     <div className="App">
       <div className="MapContainer">
-        <Map suburbs={suburbsWithData}></Map>
+        <Map suburbs={suburbsWithData} selectedSuburb={selectedSuburb}></Map>
         <div>
           <div>
             <label>
@@ -207,7 +208,11 @@ function App() {
       <div className="SuburbRankingPanel">
         <b>Ranking</b>
         {suburbsWithData.map((suburb, i) => (
-          <div key={`rankedSuburb-${i}`} className={"Rank"}>
+          <div
+            key={`rankedSuburb-${i}`}
+            className={"Rank"}
+            onMouseEnter={() => setSelectedSuburb(suburb.id)}
+          >
             {i + 1}: {suburb.name}
           </div>
         ))}
