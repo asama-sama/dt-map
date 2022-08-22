@@ -179,7 +179,7 @@ function App() {
             ))}
           </div>
         </div>
-        <div className={"MapToggles"}>
+        <div className={"CategoryToggles"}>
           {categoryToggles.map((categoryToggle, i) => (
             <div key={`toggle-${i}`} className="Selection">
               <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
