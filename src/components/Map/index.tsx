@@ -1,20 +1,16 @@
-import Color from "colorjs.io";
 import { GeoJSON as GeoJSONType } from "leaflet";
 import { useState } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import { SuburbWithData } from "../../types";
-
-type ColoringProps = (number: number | undefined) => string;
+import { colorSuburb } from "../../util/colorSuburb";
 
 const GeoLayer = ({
   suburb,
   suburbName,
-  coloring,
   active,
 }: {
   suburb: SuburbWithData;
   suburbName: string;
-  coloring: ColoringProps;
   active: boolean;
 }) => {
   const [ref, setRef] = useState<GeoJSONType>();
@@ -27,7 +23,7 @@ const GeoLayer = ({
   return (
     <GeoJSON
       data={suburb.geoData[suburbName].geojson}
-      style={{ color: coloring(suburb.readingNormalised) }}
+      style={{ color: colorSuburb(suburb.readingNormalised) }}
       onEachFeature={(feature, layer) => {
         const content = `<div>${suburb.reading}</div>`;
         layer.bindPopup(content);
@@ -48,11 +44,6 @@ export const Map = ({
   suburbs: SuburbWithData[];
   selectedSuburb: number | undefined;
 }) => {
-  const color = new Color("p3", [0, 1, 0]);
-  const redgreen = color.range("red", {
-    space: "lch", // interpolation space
-    outputSpace: "srgb",
-  });
   const sortedSuburbs = suburbs.sort((s1, s2) => s1.id - s2.id); // always sort here so they get rendered in the same order
   return (
     <MapContainer
@@ -72,7 +63,6 @@ export const Map = ({
             <GeoLayer
               suburb={suburb}
               suburbName={suburbName}
-              coloring={redgreen}
               key={`${suburbName},${i}`}
               active={active}
             />

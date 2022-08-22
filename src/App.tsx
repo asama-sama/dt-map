@@ -6,6 +6,7 @@ import { SuburbsIndexed, SuburbWithData, InputToggle, Emission } from "./types";
 import { applyRange } from "./util";
 import Slider from "rc-slider";
 import { getCategories } from "./requests/categories";
+import { colorSuburb } from "./util/colorSuburb";
 
 import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
@@ -207,15 +208,18 @@ function App() {
       </div>
       <div className="SuburbRankingPanel">
         <b>Ranking</b>
-        {suburbsWithData.map((suburb, i) => (
-          <div
-            key={`rankedSuburb-${i}`}
-            className={"Rank"}
-            onMouseEnter={() => setSelectedSuburb(suburb.id)}
-          >
-            {i + 1}: {suburb.name}
-          </div>
-        ))}
+        {suburbsWithData.map((suburb, i) => {
+          return (
+            <div
+              key={`rankedSuburb-${i}`}
+              className={"Rank"}
+              onMouseEnter={() => setSelectedSuburb(suburb.id)}
+              style={{ color: colorSuburb(suburb.readingNormalised) }}
+            >
+              {i + 1}: <b>{suburb.name}</b>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
