@@ -85,7 +85,7 @@ function App() {
   type SliderProps = {
     min: number;
     max: number;
-    marks: { [key: number]: string };
+    marks: { [key: number]: { style: object; label: string } };
   };
 
   const sliderProps: SliderProps = {
@@ -109,7 +109,10 @@ function App() {
   years.forEach((year) => {
     if (year < sliderProps.min) sliderProps.min = year;
     if (year > sliderProps.max) sliderProps.max = year;
-    sliderProps.marks[year] = year.toString();
+    sliderProps.marks[year] = {
+      style: { color: "white" },
+      label: year.toString(),
+    };
   });
 
   return (
@@ -117,25 +120,43 @@ function App() {
       <div className="MapContainer">
         <Map suburbs={suburbsWithData} selectedSuburb={selectedSuburb}></Map>
         <div>
-          <div>
-            <label>
-              Aggregate
-              <input
-                type="radio"
-                name="dataSelection"
-                onChange={() => handleToggleDataView("aggregate")}
-                checked={dataView === "aggregate"}
-              ></input>
-            </label>
-            <label>
-              Yearly
-              <input
-                type="radio"
-                name="dataSelection"
-                onChange={() => handleToggleDataView("yearly")}
-                checked={dataView === "yearly"}
-              ></input>
-            </label>
+          <div className="AggregateTogglesContainer">
+            <div className="AggregateToggles">
+              <label>
+                Aggregate
+                <input
+                  type="radio"
+                  name="dataSelection"
+                  onChange={() => handleToggleDataView("aggregate")}
+                  checked={dataView === "aggregate"}
+                ></input>
+              </label>
+              <label>
+                Yearly
+                <input
+                  type="radio"
+                  name="dataSelection"
+                  onChange={() => handleToggleDataView("yearly")}
+                  checked={dataView === "yearly"}
+                ></input>
+              </label>
+              {dataView === "yearly" ? (
+                <Slider
+                  marks={sliderProps.marks}
+                  step={null}
+                  min={sliderProps.min}
+                  max={sliderProps.max}
+                  onChange={(year) => {
+                    if (!Array.isArray(year)) {
+                      setYear(year);
+                    }
+                  }}
+                  value={year}
+                />
+              ) : (
+                <></>
+              )}
+            </div>
           </div>
           <div>
             {sortToggles.map((toggle, i) => (
@@ -189,37 +210,21 @@ function App() {
             </div>
           ))}
         </div>
-        {dataView === "yearly" ? (
-          <Slider
-            marks={sliderProps.marks}
-            step={null}
-            min={sliderProps.min}
-            max={sliderProps.max}
-            onChange={(year) => {
-              if (!Array.isArray(year)) {
-                setYear(year);
-              }
-            }}
-            value={year}
-          />
-        ) : (
-          <></>
-        )}
-      </div>
-      <div className="SuburbRankingPanel">
-        <b>Ranking</b>
-        {suburbsWithData.map((suburb, i) => {
-          return (
-            <div
-              key={`rankedSuburb-${i}`}
-              className={"Rank"}
-              onMouseEnter={() => setSelectedSuburb(suburb.id)}
-              style={{ color: colorSuburb(suburb.readingNormalised) }}
-            >
-              {i + 1}: <b>{suburb.name}</b>
-            </div>
-          );
-        })}
+        <div className="SuburbRankingPanel">
+          <b>Ranking</b>
+          {suburbsWithData.map((suburb, i) => {
+            return (
+              <div
+                key={`rankedSuburb-${i}`}
+                className={"Rank"}
+                onMouseEnter={() => setSelectedSuburb(suburb.id)}
+                style={{ color: colorSuburb(suburb.readingNormalised) }}
+              >
+                {i + 1}: <b>{suburb.name}</b>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
