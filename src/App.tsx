@@ -97,7 +97,10 @@ function App() {
       ...suburbs[emission.suburbId],
       reading: emission.reading,
     }))
-    .filter((suburbWithdata) => suburbWithdata.geoData && suburbWithdata.id);
+    .filter(
+      (suburbWithdata) =>
+        suburbWithdata.geoData && suburbWithdata.id && suburbWithdata.reading
+    );
 
   suburbsWithData = applyRange(suburbsWithData);
 
