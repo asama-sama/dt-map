@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Map } from "./components/Map";
-import { getEmissions, getYears } from "./requests/emissions";
-import { getSuburbs } from "./requests/suburbs";
+import { getYears } from "./requests/emissions";
+import { getSuburbs, getEmissionsBySuburb } from "./requests/suburbs";
 import { SuburbsIndexed, SuburbWithData, InputToggle, Emission } from "./types";
 import { applyRange } from "./util";
 import Slider from "rc-slider";
@@ -65,7 +65,7 @@ function App() {
       const sort =
         sortToggles.find((sortToggle) => sortToggle.on)?.name.toLowerCase() ||
         "desc";
-      const _emissions = await getEmissions(categories, year, sort);
+      const _emissions = await getEmissionsBySuburb(categories, year, sort);
       setEmissions(_emissions);
     };
     fetchEmissions();
