@@ -38,7 +38,10 @@ function App() {
           path="/"
           element={<Map suburbs={suburbs} categories={categories} />}
         />
-        <Route path="/categories" element={<Categories />} />
+        <Route
+          path="/categories"
+          element={<Categories categories={categories} />}
+        />
       </Routes>
     </div>
   );
