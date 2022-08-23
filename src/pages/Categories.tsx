@@ -73,7 +73,7 @@ export const Categories = ({ categories }: { categories: Category[] }) => {
     <div className="Categories">
       <h1>Emissions By Category</h1>
       <div className="Doughnut">
-        <Doughnut data={data} />
+        <Doughnut data={data} options={{ color: "white" }} />
         <div className="CategoryRanks">
           <h2>Ranks</h2>
           {emissionsRanked.map((emission, i) => (
