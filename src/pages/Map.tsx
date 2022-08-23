@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { getYears } from "../requests/emissions";
-import { getCategories } from "../requests/categories";
-import { getSuburbs, getEmissionsBySuburb } from "../requests/suburbs";
+import { getEmissionsBySuburb } from "../requests/suburbs";
 import {
   SuburbsIndexed,
   SuburbWithData,
   InputToggle,
   Emission,
+  Category,
 } from "../types";
 import { applyRange } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
@@ -17,11 +17,16 @@ import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
 import "./Map.css";
 
-export const Map = () => {
+export const Map = ({
+  suburbs,
+  categories,
+}: {
+  suburbs: SuburbsIndexed;
+  categories: Category[];
+}) => {
   type DataView = "aggregate" | "yearly";
 
   const [emissions, setEmissions] = useState<Emission[]>([]);
-  const [suburbs, setSuburbs] = useState<SuburbsIndexed>({});
   const [selectedSuburb, setSelectedSuburb] = useState<number | undefined>();
   const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
   const [sortToggles, setSortToggles] = useState<InputToggle[]>([
@@ -43,15 +48,11 @@ export const Map = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const suburbs = await getSuburbs();
-        const suburbsMap: SuburbsIndexed = {};
-        suburbs.map((suburb) => (suburbsMap[suburb.id] = suburb));
-        setSuburbs(suburbsMap);
-        const categories = await getCategories();
         const categoryToggles: InputToggle[] = categories.map((category) => ({
           ...category,
           on: true,
         }));
+        console.log("toggles", categoryToggles);
         setCategoryToggles(categoryToggles);
         const _years = await getYears();
         setYears(_years);
@@ -60,7 +61,7 @@ export const Map = () => {
       }
     };
     fetchInitialData();
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     const fetchEmissions = async () => {
