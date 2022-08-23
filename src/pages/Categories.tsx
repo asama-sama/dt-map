@@ -67,7 +67,6 @@ export const Categories = ({ categories }: { categories: Category[] }) => {
   };
 
   const emissionsRanked = emissionsWithCategory.concat();
-  console.log("ranked", emissionsRanked);
   emissionsRanked.sort((e1, e2) => e2.reading - e1.reading);
 
   return (
@@ -84,7 +83,9 @@ export const Categories = ({ categories }: { categories: Category[] }) => {
               style={{ color: colors[i].border }}
             >
               <span>{emission.category?.name}</span>
-              <span>{emission.reading.toFixed(2)}</span>
+              <span>
+                <b>{emission.reading.toFixed(2)}</b>
+              </span>
             </div>
           ))}
         </div>

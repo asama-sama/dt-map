@@ -52,7 +52,6 @@ export const Map = ({
           ...category,
           on: true,
         }));
-        console.log("toggles", categoryToggles);
         setCategoryToggles(categoryToggles);
         const _years = await getYears();
         setYears(_years);
