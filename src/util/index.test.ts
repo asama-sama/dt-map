@@ -17,7 +17,6 @@ describe("utils", () => {
       shapeLength: 0,
     }));
     const results = applyRange(emissions);
-    console.log(results);
     results.forEach((result, i) => {
       expect(result.readingNormalised).toBeCloseTo(expectedValues[i]);
     });
