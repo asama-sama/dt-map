@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
-import { getYears } from "../requests/emissions";
 import { getEmissionsBySuburb } from "../requests/suburbs";
 import {
   SuburbsIndexed,
@@ -20,9 +19,11 @@ import "./Map.css";
 export const Map = ({
   suburbs,
   categories,
+  years,
 }: {
   suburbs: SuburbsIndexed;
   categories: Category[];
+  years: number[];
 }) => {
   type DataView = "aggregate" | "yearly";
 
@@ -43,7 +44,6 @@ export const Map = ({
   ]);
   const [dataView, setDataView] = useState<DataView>("aggregate");
   const [year, setYear] = useState<number>();
-  const [years, setYears] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -53,8 +53,6 @@ export const Map = ({
           on: true,
         }));
         setCategoryToggles(categoryToggles);
-        const _years = await getYears();
-        setYears(_years);
       } catch (e) {
         console.error(e);
       }

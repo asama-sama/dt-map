@@ -49,6 +49,10 @@ export type Emission = {
   categoryId: number;
 };
 
+export type EmissionsBySuburb = {
+  [key: number]: Emission[];
+};
+
 export type Input = {
   id: number;
   name: string;

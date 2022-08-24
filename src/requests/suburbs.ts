@@ -1,4 +1,4 @@
-import { Suburb, Emission } from "../types";
+import { Suburb, Emission, EmissionsBySuburb } from "../types";
 const { VITE_SERVER_URL } = import.meta.env;
 
 export const getSuburbs = async () => {
@@ -26,4 +26,9 @@ export const getEmissionsBySuburb = async (
   queryStr += `sort=${sort}`;
   const res = await fetch(`${VITE_SERVER_URL}/suburbs/emissions?${queryStr}`);
   return (await res.json()) as Emission[];
+};
+
+export const getYearlyEmissionsBySuburb = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/suburbs/emissions/yearly`);
+  return (await res.json()) as EmissionsBySuburb;
 };

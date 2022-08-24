@@ -41,7 +41,12 @@
 }
 .Routes {
   position: fixed;
-  top: 10px;
+  top: 0;
   left: 200px;
   z-index: 10000;
+  width: 15%;
+  display: flex;
+  justify-content: space-between;
+  background: #ffffff94;
+  padding: 10px;
 }
