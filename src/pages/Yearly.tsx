@@ -22,6 +22,16 @@ import {
 import { Toggles } from "../components/Toggles";
 import "./Yearly.css";
 
+type SortOptions = "high" | "low";
+type SuburbColors = {
+  [key: number]: {
+    borderColor: string;
+    backgroundColor: string;
+  };
+};
+
+let suburbColors: SuburbColors = {};
+
 export const Yearly = ({
   years,
   suburbs,
@@ -41,8 +51,6 @@ export const Yearly = ({
     Legend
   );
 
-  type SortOptions = "high" | "low";
-
   const [emissionsBySuburb, setEmissionsBySuburb] = useState<EmissionsBySuburb>(
     []
   );
@@ -50,6 +58,25 @@ export const Yearly = ({
   const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
 
   const sortOptions: SortOptions[] = ["high", "low"];
+
+  const getSuburbColor = (suburbId: number) => {
+    if (!suburbColors[suburbId]) {
+      const rgb = [Math.random(), Math.random(), Math.random()];
+      const backgroundColor = new Color("sRGB", rgb, 0.2);
+      const borderColor = new Color("sRGB", rgb);
+      const suburbColor = {
+        backgroundColor,
+        borderColor,
+      };
+      suburbColors = {
+        ...suburbColors,
+        [suburbId]: suburbColor,
+      };
+      return suburbColor;
+    } else {
+      return suburbColors[suburbId];
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -110,11 +137,6 @@ export const Yearly = ({
     );
     const data = years.map((year) => emissionYearMap[year].reading);
 
-    const rgb = [Math.random(), Math.random(), Math.random()];
-
-    const backgroundColor = new Color("sRGB", rgb, 0.2);
-    const borderColor = new Color("sRGB", rgb);
-
     let hidden;
     if (sort === "high") {
       hidden = i < 5 ? false : true;
@@ -122,12 +144,14 @@ export const Yearly = ({
       hidden = suburbGrowth.length - 1 - i < 5 ? false : true;
     }
 
+    const color = getSuburbColor(sg.suburbId);
+
     if (!suburbs[sg.suburbId]) return;
     const dataset = {
       label: suburbs[sg.suburbId].name,
       data,
-      borderColor,
-      backgroundColor,
+      borderColor: color.borderColor,
+      backgroundColor: color.backgroundColor,
       hidden,
     };
     datasets.push(dataset);
@@ -159,7 +183,7 @@ export const Yearly = ({
           </div>
           <div className="SidePanel">
             <div>
-              <h2>Sort by</h2>
+              <h2>Variation</h2>
               {sortOptions.map((sortOption, i) => (
                 <div key={`opt-${i}`}>
                   <label>
