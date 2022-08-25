@@ -28,7 +28,10 @@ export const getEmissionsBySuburb = async (
   return (await res.json()) as Emission[];
 };
 
-export const getYearlyEmissionsBySuburb = async () => {
-  const res = await fetch(`${VITE_SERVER_URL}/suburbs/emissions/yearly`);
+export const getYearlyEmissionsBySuburb = async (categories: number[]) => {
+  const categoriesString = `[${categories.join(",")}]`;
+  const res = await fetch(
+    `${VITE_SERVER_URL}/suburbs/emissions/yearly?categories=${categoriesString}`
+  );
   return (await res.json()) as EmissionsBySuburb;
 };

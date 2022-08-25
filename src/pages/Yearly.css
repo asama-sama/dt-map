@@ -7,3 +7,11 @@
 .YearlyContent {
   width: 80%;
 }
+
+.Content {
+  display: flex;
+}
+
+.MainContent {
+  width: 80%;
+}

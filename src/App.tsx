@@ -52,7 +52,9 @@ function App() {
         />
         <Route
           path="/yearly"
-          element={<Yearly years={years} suburbs={suburbs} />}
+          element={
+            <Yearly years={years} suburbs={suburbs} categories={categories} />
+          }
         />
       </Routes>
     </div>

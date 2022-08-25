@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
+import { Toggles } from "../components/Toggles";
 import { getEmissionsBySuburb } from "../requests/suburbs";
 import {
   SuburbsIndexed,
@@ -122,44 +123,7 @@ export const Map = ({
     <div className="MapContainer">
       <MapComponent suburbs={suburbsWithData} selectedSuburb={selectedSuburb} />
       <div>
-        <div className="AggregateTogglesContainer">
-          <div className="AggregateToggles">
-            <label>
-              Aggregate
-              <input
-                type="radio"
-                name="dataSelection"
-                onChange={() => handleToggleDataView("aggregate")}
-                checked={dataView === "aggregate"}
-              ></input>
-            </label>
-            <label>
-              Yearly
-              <input
-                type="radio"
-                name="dataSelection"
-                onChange={() => handleToggleDataView("yearly")}
-                checked={dataView === "yearly"}
-              ></input>
-            </label>
-            {dataView === "yearly" ? (
-              <Slider
-                marks={sliderProps.marks}
-                step={null}
-                min={sliderProps.min}
-                max={sliderProps.max}
-                onChange={(year) => {
-                  if (!Array.isArray(year)) {
-                    setYear(year);
-                  }
-                }}
-                value={year}
-              />
-            ) : (
-              <></>
-            )}
-          </div>
-        </div>
+        <div className="AggregateTogglesContainer"></div>
         <div>
           {sortToggles.map((toggle, i) => (
             <span key={`sortToggle-${i}`}>
@@ -182,35 +146,48 @@ export const Map = ({
         </div>
       </div>
       <div className={"CategoryToggles"}>
-        {categoryToggles.map((categoryToggle, i) => (
-          <div key={`toggle-${i}`} className="Selection">
-            <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
-              {categoryToggle.name}
-            </label>
+        <h3>Categories</h3>
+        <Toggles
+          toggleInputs={categoryToggles}
+          setToggleInputs={setCategoryToggles}
+        />
+        <div>
+          <h3>Aggregation</h3>
+          <label>
+            Aggregate
             <input
-              id={`toggle-${i}`}
-              name={`toggle-${i}`}
-              type="checkbox"
-              value={categoryToggle.id}
-              checked={categoryToggle.on}
-              onChange={(e) => {
-                const newCategoriesToggles = categoryToggles.map(
-                  (categoryToggle, j) => {
-                    if (i === j) {
-                      return {
-                        ...categoryToggle,
-                        on: e.target.checked,
-                      };
-                    } else {
-                      return categoryToggle;
-                    }
-                  }
-                );
-                setCategoryToggles(newCategoriesToggles);
-              }}
+              type="radio"
+              name="dataSelection"
+              onChange={() => handleToggleDataView("aggregate")}
+              checked={dataView === "aggregate"}
             ></input>
-          </div>
-        ))}
+          </label>
+          <label>
+            Yearly
+            <input
+              type="radio"
+              name="dataSelection"
+              onChange={() => handleToggleDataView("yearly")}
+              checked={dataView === "yearly"}
+            ></input>
+          </label>
+          {dataView === "yearly" ? (
+            <Slider
+              marks={sliderProps.marks}
+              step={null}
+              min={sliderProps.min}
+              max={sliderProps.max}
+              onChange={(year) => {
+                if (!Array.isArray(year)) {
+                  setYear(year);
+                }
+              }}
+              value={year}
+            />
+          ) : (
+            <></>
+          )}
+        </div>
       </div>
       <div className="SuburbRankingPanel">
         <b>Ranking</b>

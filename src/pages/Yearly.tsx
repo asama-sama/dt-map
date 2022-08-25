@@ -12,15 +12,24 @@ import {
 import { Line } from "react-chartjs-2";
 import Color from "colorjs.io";
 import { getYearlyEmissionsBySuburb } from "../requests/suburbs";
-import { Emission, EmissionsBySuburb, SuburbsIndexed } from "../types";
+import {
+  Emission,
+  EmissionsBySuburb,
+  SuburbsIndexed,
+  Category,
+  InputToggle,
+} from "../types";
+import { Toggles } from "../components/Toggles";
 import "./Yearly.css";
 
 export const Yearly = ({
   years,
   suburbs,
+  categories,
 }: {
   years: number[];
   suburbs: SuburbsIndexed;
+  categories: Category[];
 }) => {
   ChartJS.register(
     CategoryScale,
@@ -38,16 +47,28 @@ export const Yearly = ({
     []
   );
   const [sort, setSort] = useState<SortOptions>("high");
+  const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
 
   const sortOptions: SortOptions[] = ["high", "low"];
 
   useEffect(() => {
     const fetch = async () => {
-      const results = await getYearlyEmissionsBySuburb();
+      const results = await getYearlyEmissionsBySuburb(
+        categoryToggles.filter((toggle) => toggle.on).map((toggle) => toggle.id)
+      );
       setEmissionsBySuburb(results);
     };
     fetch();
-  }, []);
+  }, [categoryToggles]);
+
+  useEffect(() => {
+    const categoryToggles = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      on: true,
+    }));
+    setCategoryToggles(categoryToggles);
+  }, [categories]);
 
   const labels = years;
 
@@ -131,21 +152,33 @@ export const Yearly = ({
     <div className="Yearly">
       <div className="YearlyContent">
         <h1>Yearly Emissions</h1>
-        <h2>{sort === "high" ? "Highest" : "Lowest"} growth suburbs</h2>
-        <Line options={options} data={data} />
-        <div>
-          {sortOptions.map((sortOption, i) => (
-            <div key={`opt-${i}`}>
-              <label>
-                {sortOption}
-                <input
-                  type="radio"
-                  onChange={() => setSort(sortOption)}
-                  checked={sortOption === sort ? true : false}
-                ></input>
-              </label>
+        <h2>{sort === "high" ? "Highest" : "Lowest"} variation suburbs</h2>
+        <div className="Content">
+          <div className="MainContent">
+            <Line options={options} data={data} />
+          </div>
+          <div className="SidePanel">
+            <div>
+              <h2>Sort by</h2>
+              {sortOptions.map((sortOption, i) => (
+                <div key={`opt-${i}`}>
+                  <label>
+                    {sortOption}
+                    <input
+                      type="radio"
+                      onChange={() => setSort(sortOption)}
+                      checked={sortOption === sort ? true : false}
+                    ></input>
+                  </label>
+                </div>
+              ))}
             </div>
-          ))}
+            <h2>Filter categories</h2>
+            <Toggles
+              toggleInputs={categoryToggles}
+              setToggleInputs={setCategoryToggles}
+            />
+          </div>
         </div>
       </div>
     </div>
