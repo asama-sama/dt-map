@@ -66,3 +66,8 @@ export type Category = {
   name: string;
   id: number;
 };
+
+export type Api = {
+  id: number;
+  name: string;
+};

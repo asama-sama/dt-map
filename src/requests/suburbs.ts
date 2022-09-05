@@ -35,3 +35,8 @@ export const getYearlyEmissionsBySuburb = async (categories: number[]) => {
   );
   return (await res.json()) as EmissionsBySuburb;
 };
+
+export const getSuburbsForApi = async (apiId: number) => {
+  const res = await fetch(`${VITE_SERVER_URL}/suburbs/api/${apiId}`);
+  return res.json();
+};

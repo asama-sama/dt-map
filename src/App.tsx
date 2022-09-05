@@ -4,15 +4,17 @@ import { Map } from "./pages/Map";
 import { Categories } from "./pages/Categories";
 import { Yearly } from "./pages/Yearly";
 import { getCategories } from "./requests/categories";
-import { getSuburbs } from "./requests/suburbs";
+import { getSuburbs, getSuburbsForApi } from "./requests/suburbs";
 import { getYears } from "./requests/emissions";
-import { SuburbsIndexed, Category } from "./types";
+import { SuburbsIndexed, Category, Api } from "./types";
 import "./App.css";
+import { getApis } from "./requests/apis";
 
 function App() {
   const [suburbs, setSuburbs] = useState<SuburbsIndexed>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [years, setYears] = useState<number[]>([]);
+  const [apis, setApis] = useState<Api[]>([]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -25,6 +27,12 @@ function App() {
         setCategories(categories);
         const years = await getYears();
         setYears(years);
+        const apis = await getApis();
+        setApis(apis);
+        const nswAirQualityApi = apis.find(
+          (api) => api.name === "NSW_AIR_QUALITY"
+        );
+        nswAirQualityApi && getSuburbsForApi(nswAirQualityApi.id);
       } catch (e) {
         console.error(e);
       }
