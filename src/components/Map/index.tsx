@@ -25,7 +25,9 @@ const GeoLayer = ({
       data={suburb.geoData[suburbName].geojson}
       style={{ color: colorSuburb(suburb.readingNormalised) }}
       onEachFeature={(feature, layer) => {
-        const content = `<div>${suburb.reading}</div>`;
+        const content = `<div>${suburb.name}: ${suburb.reading?.toFixed(
+          2
+        )}</div>`;
         layer.bindPopup(content);
       }}
       ref={(r) => {
@@ -44,7 +46,6 @@ export const Map = ({
   suburbs: SuburbWithData[];
   selectedSuburb: number | undefined;
 }) => {
-  const sortedSuburbs = suburbs.sort((s1, s2) => s1.id - s2.id); // always sort here so they get rendered in the same order
   return (
     <MapContainer
       center={[-33.879, 151.1818]}
@@ -56,7 +57,7 @@ export const Map = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {sortedSuburbs.map((suburb) => {
+      {suburbs.map((suburb) => {
         const active = suburb.id === selectedSuburb;
         return Object.keys(suburb.geoData).map((suburbName, i) => {
           return (

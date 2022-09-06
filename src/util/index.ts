@@ -11,7 +11,8 @@ export const applyRange = (suburbs: SuburbWithData[]) => {
   const suburbAggregateEmissionRanged = suburbs.map((suburb) => {
     return {
       ...suburb,
-      readingNormalised: suburb.reading && (suburb.reading - min) / (max - min),
+      readingNormalised:
+        (suburb.reading && (suburb.reading - min) / (max - min)) || 0,
     };
   });
   return suburbAggregateEmissionRanged;

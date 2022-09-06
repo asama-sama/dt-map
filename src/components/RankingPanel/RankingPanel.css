@@ -1,0 +1,15 @@
+.RankingPanel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: #00000082;
+  padding: 20px;
+}
+
+.Rank {
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+}

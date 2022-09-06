@@ -30,13 +30,20 @@ export type Suburb = {
   geoData: SuburbJson;
 };
 
+export type ApiSuburb = {
+  id: number;
+  meta: {
+    siteId: number;
+  };
+};
+
 export type SuburbsIndexed = {
   [key: number]: Suburb;
 };
 
 export interface SuburbWithData extends Suburb {
   reading?: number;
-  readingNormalised?: number;
+  readingNormalised: number;
 }
 
 export type Emission = {

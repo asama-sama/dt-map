@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { Map } from "./pages/Map";
+import { MapAirQuality } from "./pages/MapAirQuality";
 import { Categories } from "./pages/Categories";
 import { Yearly } from "./pages/Yearly";
 import { getCategories } from "./requests/categories";
-import { getSuburbs, getSuburbsForApi } from "./requests/suburbs";
+import { getSuburbs } from "./requests/suburbs";
 import { getYears } from "./requests/emissions";
 import { SuburbsIndexed, Category, Api } from "./types";
 import "./App.css";
@@ -29,10 +30,6 @@ function App() {
         setYears(years);
         const apis = await getApis();
         setApis(apis);
-        const nswAirQualityApi = apis.find(
-          (api) => api.name === "NSW_AIR_QUALITY"
-        );
-        nswAirQualityApi && getSuburbsForApi(nswAirQualityApi.id);
       } catch (e) {
         console.error(e);
       }
@@ -44,6 +41,7 @@ function App() {
     <div className="App">
       <nav className="Routes">
         <Link to="/">Map</Link>
+        <Link to="/airquality">Air Quality Map</Link>
         <Link to="/categories">Categories</Link>
         <Link to="/yearly">Yearly</Link>
       </nav>
@@ -53,6 +51,10 @@ function App() {
           element={
             <Map suburbs={suburbs} categories={categories} years={years} />
           }
+        />
+        <Route
+          path="/airquality"
+          element={<MapAirQuality suburbs={suburbs} apis={apis} />}
         />
         <Route
           path="/categories"
