@@ -2,15 +2,21 @@ import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { getSuburbsForApi } from "../requests/suburbs";
-import { SuburbsIndexed, SuburbWithData, Api } from "../types";
-import { applyRange } from "../util";
+import { SuburbsIndexed, Api, Suburb } from "../types";
+import { applyRange, NonNormalisedData } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
 import { getAirQuality } from "../requests/airQuality";
+import { RankingPanel } from "../components/RankingPanel/RankingPanel";
+import {
+  getMonthlyCountsForYear,
+  getStations,
+  Station,
+  TrafficCount,
+} from "../requests/trafficVolume";
 
 import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
 import "./MapAirQuality.css";
-import { RankingPanel } from "../components/RankingPanel/RankingPanel";
 
 type AirQualityData = {
   [key: string]: {
@@ -34,9 +40,11 @@ export const MapAirQuality = ({
   const [selectedSuburb, setSelectedSuburb] = useState<number | undefined>();
   const [selectedMonth, setSelectedMonth] = useState<number>();
   const [airQualityData, setAirQualityData] = useState<AirQualityData>({});
+  const [stations, setStations] = useState<{ [key: string]: Station }>({});
+  const [trafficCounts, setTrafficCounts] = useState<TrafficCount[]>([]);
 
   useEffect(() => {
-    const initialise = async () => {
+    const initialiseAQApi = async () => {
       const nswAirQualityApi = apis.find(
         (api) => api.name === "NSW_AIR_QUALITY"
       );
@@ -66,31 +74,38 @@ export const MapAirQuality = ({
         setSelectedMonth(months[months.length - 1]);
       }
     };
-    initialise();
+    const initialiseTrafficVolumeApi = async () => {
+      const stations = await getStations();
+      setStations(stations);
+      const trafficCounts = await getMonthlyCountsForYear(
+        2022,
+        Object.keys(stations).map(Number)
+      );
+      setTrafficCounts(trafficCounts);
+    };
+    initialiseAQApi();
+    initialiseTrafficVolumeApi();
   }, [apis]);
 
-  let suburbsWithData: SuburbWithData[] = [];
+  const readings =
+    (selectedMonth !== undefined && airQualityData[selectedMonth]) || [];
+  const suburbsWithData: NonNormalisedData<Suburb>[] = Object.keys(
+    readings
+  ).map((suburbId) => {
+    const id = parseInt(suburbId);
+    return {
+      ...suburbs[id],
+      reading: readings[id],
+    };
+  });
+
+  const suburbsNormalised = applyRange(suburbsWithData);
 
   const sliderProps: SliderProps = {
     min: 0,
     max: 0,
     marks: {},
   };
-
-  if (selectedMonth !== undefined) {
-    const readings = airQualityData[selectedMonth];
-    suburbsWithData = Object.keys(readings).map((suburbId) => {
-      const id = parseInt(suburbId);
-      return {
-        ...suburbs[id],
-        reading: readings[id],
-        readingNormalised: 0,
-      };
-    });
-  }
-
-  suburbsWithData = applyRange(suburbsWithData);
-
   Object.keys(airQualityData).forEach((month) => {
     const monthInt = parseInt(month);
     const currentDate = new Date();
@@ -106,9 +121,21 @@ export const MapAirQuality = ({
     };
   });
 
+  const countsNormalised = applyRange(
+    trafficCounts.map((trafficCount) => ({
+      ...trafficCount,
+      reading: trafficCount.count,
+    }))
+  ).filter((count) => count.month === selectedMonth);
+
   return (
     <div className="MapContainer">
-      <MapComponent suburbs={suburbsWithData} selectedSuburb={selectedSuburb} />
+      <MapComponent
+        suburbs={suburbsNormalised}
+        selectedSuburb={selectedSuburb}
+        stations={stations}
+        trafficCounts={countsNormalised}
+      />
       <div className={"SliderContainer"}>
         <div className="Slider">
           <Slider
@@ -126,7 +153,7 @@ export const MapAirQuality = ({
         </div>
       </div>
       <RankingPanel
-        rankedList={suburbsWithData.map((suburb) => ({
+        rankedList={suburbsNormalised.map((suburb) => ({
           id: suburb.id,
           value: suburb.readingNormalised,
           name: suburb.name,

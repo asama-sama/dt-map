@@ -42,7 +42,7 @@ export type SuburbsIndexed = {
 };
 
 export interface SuburbWithData extends Suburb {
-  reading?: number;
+  reading: number;
   readingNormalised: number;
 }
 

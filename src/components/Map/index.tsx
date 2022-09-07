@@ -1,7 +1,9 @@
 import { GeoJSON as GeoJSONType } from "leaflet";
 import { useState } from "react";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
-import { SuburbWithData } from "../../types";
+import { MapContainer, TileLayer, GeoJSON, Circle, Popup } from "react-leaflet";
+import { Station, TrafficCount } from "../../requests/trafficVolume";
+import { Suburb } from "../../types";
+import { NormalisedData } from "../../util";
 import { colorSuburb } from "../../util/colorSuburb";
 
 const GeoLayer = ({
@@ -9,7 +11,7 @@ const GeoLayer = ({
   suburbName,
   active,
 }: {
-  suburb: SuburbWithData;
+  suburb: NormalisedData<Suburb>;
   suburbName: string;
   active: boolean;
 }) => {
@@ -42,9 +44,13 @@ const GeoLayer = ({
 export const Map = ({
   suburbs,
   selectedSuburb,
+  stations,
+  trafficCounts,
 }: {
-  suburbs: SuburbWithData[];
+  suburbs: NormalisedData<Suburb>[];
   selectedSuburb: number | undefined;
+  stations?: { [key: string]: Station };
+  trafficCounts?: NormalisedData<TrafficCount>[];
 }) => {
   return (
     <MapContainer
@@ -70,6 +76,29 @@ export const Map = ({
           );
         });
       })}
+      {stations &&
+        trafficCounts &&
+        trafficCounts.map((trafficCount) => {
+          const station = stations[trafficCount.stationKey];
+          if (!station) return;
+          return (
+            <Circle
+              key={`count-${trafficCount.countId}`}
+              center={[station.latitude, station.longitude]}
+              radius={(trafficCount.readingNormalised * 1000) ^ 2}
+              color="#000000"
+              fillColor={colorSuburb(trafficCount.readingNormalised)}
+              fillOpacity={1}
+              weight={1}
+            >
+              <Popup>{`Count ${trafficCount.reading} \n Normalised ${
+                trafficCount.readingNormalised
+              } \n Color ${colorSuburb(
+                trafficCount.readingNormalised
+              )}`}</Popup>
+            </Circle>
+          );
+        })}
     </MapContainer>
   );
 };

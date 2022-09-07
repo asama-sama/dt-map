@@ -1,19 +1,27 @@
-import { SuburbWithData } from "../types";
+export type NonNormalisedData<T> = T & {
+  reading: number;
+};
 
-export const applyRange = (suburbs: SuburbWithData[]) => {
+export type NormalisedData<T> = T &
+  NonNormalisedData<T> & {
+    readingNormalised: number;
+  };
+
+export const applyRange = <T>(
+  samples: NonNormalisedData<T>[]
+): NormalisedData<T>[] => {
   let min = 999e5;
   let max = 0;
-  suburbs.forEach((suburb) => {
+  samples.forEach((suburb) => {
     const { reading } = suburb;
-    if (reading && reading < min) min = reading;
-    if (reading && reading > max) max = reading;
+    if (reading < min) min = reading;
+    if (reading > max) max = reading;
   });
-  const suburbAggregateEmissionRanged = suburbs.map((suburb) => {
+  const samplesNormalised: NormalisedData<T>[] = samples.map((sample) => {
     return {
-      ...suburb,
-      readingNormalised:
-        (suburb.reading && (suburb.reading - min) / (max - min)) || 0,
+      ...sample,
+      readingNormalised: (sample.reading - min) / (max - min),
     };
   });
-  return suburbAggregateEmissionRanged;
+  return samplesNormalised;
 };

@@ -3,13 +3,7 @@ import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { Toggles } from "../components/Toggles";
 import { getEmissionsBySuburb } from "../requests/suburbs";
-import {
-  SuburbsIndexed,
-  SuburbWithData,
-  InputToggle,
-  Emission,
-  Category,
-} from "../types";
+import { SuburbsIndexed, InputToggle, Emission, Category } from "../types";
 import { applyRange } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
 
@@ -84,8 +78,6 @@ export const Map = ({
     setDataView(dataView);
   };
 
-  let suburbsWithData: SuburbWithData[] = [];
-
   type SliderProps = {
     min: number;
     max: number;
@@ -98,7 +90,7 @@ export const Map = ({
     marks: {},
   };
 
-  suburbsWithData = emissions
+  const suburbsWithData = emissions
     .map((emission) => ({
       ...suburbs[emission.suburbId],
       reading: emission.reading,
@@ -108,7 +100,7 @@ export const Map = ({
         suburbWithdata.geoData && suburbWithdata.id && suburbWithdata.reading
     );
 
-  suburbsWithData = applyRange(suburbsWithData);
+  const suburbsWithDataNormalised = applyRange(suburbsWithData);
 
   years.forEach((year) => {
     if (year < sliderProps.min) sliderProps.min = year;
@@ -121,7 +113,10 @@ export const Map = ({
 
   return (
     <div className="MapContainer">
-      <MapComponent suburbs={suburbsWithData} selectedSuburb={selectedSuburb} />
+      <MapComponent
+        suburbs={suburbsWithDataNormalised}
+        selectedSuburb={selectedSuburb}
+      />
       <div>
         <div className="AggregateTogglesContainer"></div>
         <div>
@@ -197,7 +192,7 @@ export const Map = ({
               key={`rankedSuburb-${i}`}
               className={"Rank"}
               onMouseEnter={() => setSelectedSuburb(suburb.id)}
-              style={{ color: colorSuburb(suburb.readingNormalised) }}
+              style={{ color: colorSuburb(1) }}
             >
               {i + 1}: <b>{suburb.name}</b>
             </div>
