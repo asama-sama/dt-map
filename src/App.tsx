@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { Map } from "./pages/Map";
 import { MapAirQuality } from "./pages/MapAirQuality";
+import { MapLive } from "./pages/MapLive";
 import { Categories } from "./pages/Categories";
 import { Yearly } from "./pages/Yearly";
 import { getCategories } from "./requests/categories";
@@ -42,6 +43,7 @@ function App() {
       <nav className="Routes">
         <Link to="/">Map</Link>
         <Link to="/airquality">Air Quality Map</Link>
+        <Link to="/live">Live Map</Link>
         <Link to="/categories">Categories</Link>
         <Link to="/yearly">Yearly</Link>
       </nav>
@@ -55,6 +57,10 @@ function App() {
         <Route
           path="/airquality"
           element={<MapAirQuality suburbs={suburbs} apis={apis} />}
+        />
+        <Route
+          path="/live"
+          element={<MapLive suburbs={suburbs} apis={apis} />}
         />
         <Route
           path="/categories"

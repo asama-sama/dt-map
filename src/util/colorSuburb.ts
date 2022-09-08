@@ -6,6 +6,7 @@ const redgreen = color.range("red", {
   outputSpace: "srgb",
 });
 
-export const colorSuburb = (value: number | undefined) => {
+export const colorSuburb = (value: number | undefined | null) => {
+  if (value === undefined || value === null) return new Color("p3", [0, 0, 0]);
   return redgreen(value);
 };

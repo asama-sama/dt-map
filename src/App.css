@@ -42,9 +42,9 @@
 .Routes {
   position: fixed;
   top: 0;
-  left: 200px;
+  left: 100px;
   z-index: 10000;
-  width: 15%;
+  width: 400px;
   display: flex;
   justify-content: space-between;
   background: #ffffff94;

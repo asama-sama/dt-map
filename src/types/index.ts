@@ -30,6 +30,10 @@ export type Suburb = {
   geoData: SuburbJson;
 };
 
+export interface SuburbWithMapData extends Suburb {
+  description: string;
+}
+
 export type ApiSuburb = {
   id: number;
   meta: {

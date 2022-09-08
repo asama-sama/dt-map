@@ -1,15 +1,36 @@
 const { VITE_SERVER_URL } = import.meta.env;
 
+export type AirQualityCategories =
+  | "GOOD"
+  | "FAIR"
+  | "POOR"
+  | "VERY POOR"
+  | "EXTREMELY POOR"
+  | null;
+
 export type AirQuality = {
-  date: string;
-  month: number;
   siteId: number;
   value: number;
+  date: string;
+  month?: number;
+  quality: AirQualityCategories;
 };
 
-export const getAirQuality = async (sites: number[]) => {
+export const getAirQualityMonthly = async (sites: number[]) => {
   const res = await fetch(
-    `${VITE_SERVER_URL}/airquality?sites=${JSON.stringify(sites)}`
+    `${VITE_SERVER_URL}/airquality/monthly?sites=${JSON.stringify(sites)}`
   );
   return (await res.json()) as AirQuality[];
+};
+
+export interface AirQualityDataLive extends AirQuality {
+  hour: number;
+  hourDescription: string;
+}
+
+export const getAirQualityLive = async (sites: number[]) => {
+  const res = await fetch(
+    `${VITE_SERVER_URL}/airquality/live?sites=${JSON.stringify(sites)}`
+  );
+  return (await res.json()) as AirQualityDataLive[];
 };

@@ -3,12 +3,12 @@ import "./RankingPanel.css";
 type RankedList = {
   id: number;
   name: string;
-  value: number;
+  value: number | null;
 };
 
-type ColoringFunction = (number: number) => string;
+type ColoringFunction = (number: number | null) => string;
 
-type OnMouseEnterHandle = (id: number) => void;
+type OnMouseEnterHandle = (id: number | undefined) => void;
 
 export const RankingPanel = ({
   rankedList,
@@ -19,9 +19,11 @@ export const RankingPanel = ({
   coloring: ColoringFunction;
   onMouseEnter: OnMouseEnterHandle;
 }) => {
-  const orderedRankedList = rankedList.sort(
-    (item1, item2) => item2.value - item1.value
-  );
+  const orderedRankedList = rankedList.sort((item1, item2) => {
+    if (item1.value === null) return 1;
+    if (item2.value === null) return -1;
+    return item2.value - item1.value;
+  });
 
   return (
     <div className="RankingPanel">
@@ -32,6 +34,7 @@ export const RankingPanel = ({
             key={`rankedItem-${i}`}
             className={"Rank"}
             onMouseEnter={() => onMouseEnter(item.id)}
+            onMouseLeave={() => onMouseEnter(undefined)}
             style={{ color: coloring(item.value) }}
           >
             {i + 1}: <b>{item.name}</b>

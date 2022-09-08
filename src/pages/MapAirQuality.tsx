@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { getSuburbsForApi } from "../requests/suburbs";
-import { SuburbsIndexed, Api, Suburb } from "../types";
+import { SuburbsIndexed, Api, SuburbWithMapData } from "../types";
 import { applyRange, NonNormalisedData } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
-import { getAirQuality } from "../requests/airQuality";
+import { getAirQualityMonthly } from "../requests/airQuality";
 import { RankingPanel } from "../components/RankingPanel/RankingPanel";
 import {
   getMonthlyCountsForYear,
@@ -42,7 +42,6 @@ export const MapAirQuality = ({
   const [airQualityData, setAirQualityData] = useState<AirQualityData>({});
   const [stations, setStations] = useState<{ [key: string]: Station }>({});
   const [trafficCounts, setTrafficCounts] = useState<TrafficCount[]>([]);
-
   useEffect(() => {
     const initialiseAQApi = async () => {
       const nswAirQualityApi = apis.find(
@@ -58,10 +57,15 @@ export const MapAirQuality = ({
           (nswApiSuburb) => nswApiSuburb.meta.siteId
         );
 
-        const airQualityReadings = await getAirQuality(sites);
+        const airQualityReadings = await getAirQualityMonthly(sites);
         const airQualityData: AirQualityData = {};
         for (const airQualityReading of airQualityReadings) {
-          const { month } = airQualityReading;
+          let { month } = airQualityReading;
+          if (!Number.isInteger(month)) {
+            console.error("no valid month returned", airQualityReading);
+            continue;
+          }
+          month = month as number;
           if (!airQualityData[month]) {
             airQualityData[month] = {};
           }
@@ -89,13 +93,14 @@ export const MapAirQuality = ({
 
   const readings =
     (selectedMonth !== undefined && airQualityData[selectedMonth]) || [];
-  const suburbsWithData: NonNormalisedData<Suburb>[] = Object.keys(
+  const suburbsWithData: NonNormalisedData<SuburbWithMapData>[] = Object.keys(
     readings
   ).map((suburbId) => {
     const id = parseInt(suburbId);
     return {
       ...suburbs[id],
       reading: readings[id],
+      description: `${suburbs[id].name}: ${readings[id].toFixed(2)}`,
     };
   });
 
