@@ -100,7 +100,9 @@ export const MapAirQuality = ({
     return {
       ...suburbs[id],
       reading: readings[id],
-      description: `${suburbs[id].name}: ${readings[id].toFixed(2)}`,
+      description: `${suburbs[id].name}: ${
+        readings[id] && readings[id].toFixed(2)
+      }`,
     };
   });
 
