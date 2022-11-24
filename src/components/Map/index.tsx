@@ -60,18 +60,21 @@ export const Map = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {suburbs.map((suburb) => {
-        const active = suburb.id === selectedSuburb;
-        return Object.keys(suburb.boundary).map((suburbName, i) => {
-          return (
-            <GeoLayer
-              suburb={suburb}
-              key={`${suburbName},${i}`}
-              active={active}
-            />
-          );
-        });
-      })}
+      {/* Sort by id to ensure drawing order */}
+      {suburbs
+        .sort((s1, s2) => s1.id - s2.id)
+        .map((suburb) => {
+          const active = suburb.id === selectedSuburb;
+          return Object.keys(suburb.boundary).map((suburbName, i) => {
+            return (
+              <GeoLayer
+                suburb={suburb}
+                key={`${suburbName},${suburb.id}`}
+                active={active}
+              />
+            );
+          });
+        })}
       {stations &&
         trafficCounts &&
         trafficCounts.map((trafficCount) => {

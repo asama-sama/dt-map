@@ -6,7 +6,6 @@ import {
   SuburbResponseValue,
   getEmissionsBySuburb,
   getYears,
-  CosGhgEmissionCategory,
   getCategories,
 } from "../requests/cosGhgEmissions";
 import { InputToggle, Suburb } from "../types";
@@ -66,7 +65,7 @@ export const CosEmissionsMap = () => {
     };
 
     fetchEmissions();
-  }, [year, dataView, categoryToggles]);
+  }, [year, dataView, categoryToggles, sortToggles]);
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -143,29 +142,6 @@ export const CosEmissionsMap = () => {
         suburbs={suburbsWithDataNormalised}
         selectedSuburb={selectedSuburb}
       />
-      <div>
-        <div className="AggregateTogglesContainer"></div>
-        <div>
-          {sortToggles.map((toggle, i) => (
-            <span key={`sortToggle-${i}`}>
-              <label htmlFor={toggle.name}>{toggle.name}</label>
-              <input
-                type={"radio"}
-                name={toggle.name}
-                checked={toggle.on}
-                onChange={(e) =>
-                  setSortToggles(
-                    sortToggles.map((sortToggle) => ({
-                      ...sortToggle,
-                      on: toggle.id === sortToggle.id && e.target.checked,
-                    }))
-                  )
-                }
-              ></input>
-            </span>
-          ))}
-        </div>
-      </div>
       <div className={"CategoryToggles"}>
         <h3>Categories</h3>
         <Toggles
@@ -209,6 +185,26 @@ export const CosEmissionsMap = () => {
           ) : (
             <></>
           )}
+          <div>
+            {sortToggles.map((toggle, i) => (
+              <span key={`sortToggle-${i}`}>
+                <label htmlFor={toggle.name}>{toggle.name}</label>
+                <input
+                  type={"radio"}
+                  name={toggle.name}
+                  checked={toggle.on}
+                  onChange={(e) =>
+                    setSortToggles(
+                      sortToggles.map((sortToggle) => ({
+                        ...sortToggle,
+                        on: toggle.id === sortToggle.id && e.target.checked,
+                      }))
+                    )
+                  }
+                ></input>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
       <div className="SuburbRankingPanel">
