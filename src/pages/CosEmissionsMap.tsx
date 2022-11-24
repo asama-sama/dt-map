@@ -6,6 +6,8 @@ import {
   SuburbResponseValue,
   getEmissionsBySuburb,
   getYears,
+  CosGhgEmissionCategory,
+  getCategories,
 } from "../requests/cosGhgEmissions";
 import { InputToggle, Suburb } from "../types";
 import { applyRange } from "../util";
@@ -64,14 +66,26 @@ export const CosEmissionsMap = () => {
     };
 
     fetchEmissions();
-  }, [year, dataView]);
+  }, [year, dataView, categoryToggles]);
 
   useEffect(() => {
     const fetchYears = async () => {
-      const _years = await getYears();
-      setYears(_years);
+      const years = await getYears();
+      setYears(years);
     };
     fetchYears();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const toggles = (await getCategories()).map((cat) => ({
+        ...cat,
+        on: true,
+      }));
+      console.log(toggles);
+      setCategoryToggles(toggles);
+    };
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -188,7 +202,7 @@ export const CosEmissionsMap = () => {
                 if (!Array.isArray(year)) {
                   setYear(year);
                 }
-                setSelectedSuburb();
+                setSelectedSuburb(undefined);
               }}
               value={year}
             />

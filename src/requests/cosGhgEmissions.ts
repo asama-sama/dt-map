@@ -12,7 +12,7 @@ export const getEmissionsBySuburb = async (
 ) => {
   let queryStr = "";
   const categoriesString = categories
-    .map((category) => `category[]=${category}`)
+    .map((category) => `categories[]=${category}`)
     .join("&");
   queryStr += categoriesString + "&";
 
@@ -31,4 +31,14 @@ export const getEmissionsBySuburb = async (
 export const getYears = async () => {
   const res = await fetch(`${VITE_SERVER_URL}/cosghgemissions/years`);
   return (await res.json()) as number[];
+};
+
+export type CosGhgEmissionCategory = {
+  id: number;
+  name: string;
+};
+
+export const getCategories = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/cosghgemissions/categories`);
+  return (await res.json()) as CosGhgEmissionCategory[];
 };

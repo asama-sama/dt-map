@@ -81,7 +81,7 @@ export interface InputToggle extends Input {
   on: boolean;
 }
 
-export type Category = {
+type Category = {
   name: string;
   id: number;
 };

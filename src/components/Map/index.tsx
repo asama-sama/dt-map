@@ -25,7 +25,9 @@ const GeoLayer = ({
       data={suburb.boundary}
       style={{ color: colorSuburb(suburb.readingNormalised) }}
       onEachFeature={(feature, layer) => {
-        layer.bindPopup(suburb.name);
+        layer.bindPopup(
+          `${suburb.name}: ${suburb.reading && Math.round(suburb.reading)}`
+        );
       }}
       ref={(r) => {
         if (r) {
