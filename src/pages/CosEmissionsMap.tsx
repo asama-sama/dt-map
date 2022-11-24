@@ -5,8 +5,9 @@ import { Toggles } from "../components/Toggles";
 import {
   SuburbResponseValue,
   getEmissionsBySuburb,
+  getYears,
 } from "../requests/cosGhgEmissions";
-import { InputToggle, Emission, Category, Suburb } from "../types";
+import { InputToggle, Suburb } from "../types";
 import { applyRange } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
 import { globalSuburbState } from "../state/global";
@@ -39,6 +40,7 @@ export const CosEmissionsMap = () => {
     },
   ]);
   const [dataView, setDataView] = useState<DataView>("aggregate");
+  const [years, setYears] = useState<number[]>([]);
   const [year, setYear] = useState<number>();
 
   useEffect(() => {
@@ -49,12 +51,29 @@ export const CosEmissionsMap = () => {
       const sort =
         sortToggles.find((sortToggle) => sortToggle.on)?.name.toLowerCase() ||
         "desc";
-      const _emissions = await getEmissionsBySuburb(categories, year, sort);
+      let yearParam;
+      if (dataView === "yearly") {
+        yearParam = year;
+      }
+      const _emissions = await getEmissionsBySuburb(
+        categories,
+        yearParam,
+        sort
+      );
       setEmissions(_emissions);
     };
 
     fetchEmissions();
+  }, [year, dataView]);
+
+  useEffect(() => {
+    const fetchYears = async () => {
+      const _years = await getYears();
+      setYears(_years);
+    };
+    fetchYears();
   }, []);
+
   useEffect(() => {
     const suburbIdsToFetch = emissions
       .filter(({ suburbId }) => {
@@ -95,14 +114,14 @@ export const CosEmissionsMap = () => {
     );
 
   const suburbsWithDataNormalised = applyRange(suburbsWithData);
-  // years.forEach((year) => {
-  //   if (year < sliderProps.min) sliderProps.min = year;
-  //   if (year > sliderProps.max) sliderProps.max = year;
-  //   sliderProps.marks[year] = {
-  //     style: { color: "white" },
-  //     label: year.toString(),
-  //   };
-  // });
+  years.forEach((year) => {
+    if (year < sliderProps.min) sliderProps.min = year;
+    if (year > sliderProps.max) sliderProps.max = year;
+    sliderProps.marks[year] = {
+      style: { color: "white" },
+      label: year.toString(),
+    };
+  });
 
   return (
     <div className="MapContainer">
@@ -141,12 +160,12 @@ export const CosEmissionsMap = () => {
         />
         <div>
           <h3>Aggregation</h3>
-          {/* <label>
+          <label>
             Aggregate
             <input
               type="radio"
               name="dataSelection"
-              onChange={() => handleToggleDataView("aggregate")}
+              onChange={() => setDataView("aggregate")}
               checked={dataView === "aggregate"}
             ></input>
           </label>
@@ -155,10 +174,10 @@ export const CosEmissionsMap = () => {
             <input
               type="radio"
               name="dataSelection"
-              onChange={() => handleToggleDataView("yearly")}
+              onChange={() => setDataView("yearly")}
               checked={dataView === "yearly"}
             ></input>
-          </label> */}
+          </label>
           {dataView === "yearly" ? (
             <Slider
               marks={sliderProps.marks}
@@ -169,6 +188,7 @@ export const CosEmissionsMap = () => {
                 if (!Array.isArray(year)) {
                   setYear(year);
                 }
+                setSelectedSuburb();
               }}
               value={year}
             />
@@ -177,21 +197,21 @@ export const CosEmissionsMap = () => {
           )}
         </div>
       </div>
-      {/* <div className="SuburbRankingPanel">
+      <div className="SuburbRankingPanel">
         <b>Ranking</b>
-        {suburbsWithData.map((suburb, i) => {
+        {suburbsWithDataNormalised.map((suburb, i) => {
           return (
             <div
               key={`rankedSuburb-${i}`}
               className={"Rank"}
               onMouseEnter={() => setSelectedSuburb(suburb.id)}
-              style={{ color: colorSuburb(1) }}
+              style={{ color: colorSuburb(suburb.readingNormalised) }}
             >
               {i + 1}: <b>{suburb.name}</b>
             </div>
           );
         })}
-      </div> */}
+      </div>
     </div>
   );
 };

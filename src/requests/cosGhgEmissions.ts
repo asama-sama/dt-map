@@ -27,3 +27,8 @@ export const getEmissionsBySuburb = async (
   );
   return (await res.json()) as SuburbResponseValue[];
 };
+
+export const getYears = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/cosghgemissions/years`);
+  return (await res.json()) as number[];
+};
