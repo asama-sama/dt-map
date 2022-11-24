@@ -25,9 +25,17 @@ export type SuburbJson = {
 export type Suburb = {
   id: number;
   name: string;
-  shapeArea: number;
-  shapeLength: number;
-  geoData: SuburbJson;
+  fetchFailed: boolean;
+  boundary: {
+    type: "Polygon";
+    coordinates: number[][][];
+  };
+  position: {
+    type: "Point";
+    coordinates: [];
+  };
+  createdAt: string;
+  updatedAt: string;
 };
 
 export interface SuburbWithMapData extends Suburb {
@@ -41,9 +49,9 @@ export type ApiSuburb = {
   };
 };
 
-export type SuburbsIndexed = {
-  [key: number]: Suburb;
-};
+// export type SuburbsIndexed = {
+//   [key: number]: Suburb;
+// };
 
 export interface SuburbWithData extends Suburb {
   reading: number;

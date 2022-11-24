@@ -2,32 +2,30 @@ import { GeoJSON as GeoJSONType } from "leaflet";
 import { useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, Circle, Popup } from "react-leaflet";
 import { Station, TrafficCount } from "../../requests/trafficVolume";
-import { SuburbWithMapData } from "../../types";
+import { Suburb } from "../../types";
 import { NormalisedData } from "../../util";
 import { colorSuburb } from "../../util/colorSuburb";
 
 const GeoLayer = ({
   suburb,
-  suburbName,
   active,
 }: {
-  suburb: NormalisedData<SuburbWithMapData>;
-  suburbName: string;
+  suburb: NormalisedData<Suburb>;
   active: boolean;
 }) => {
   const [ref, setRef] = useState<GeoJSONType>();
 
   if (active) {
-    ref?.bindPopup(suburb.description);
+    ref?.bindPopup(suburb.name);
     ref?.openPopup();
   }
 
   return (
     <GeoJSON
-      data={suburb.geoData[suburbName].geojson}
+      data={suburb.boundary}
       style={{ color: colorSuburb(suburb.readingNormalised) }}
       onEachFeature={(feature, layer) => {
-        layer.bindPopup(suburb.description);
+        layer.bindPopup(suburb.name);
       }}
       ref={(r) => {
         if (r) {
@@ -44,7 +42,7 @@ export const Map = ({
   stations,
   trafficCounts,
 }: {
-  suburbs: NormalisedData<SuburbWithMapData>[];
+  suburbs: NormalisedData<Suburb>[];
   selectedSuburb: number | undefined;
   stations?: { [key: string]: Station };
   trafficCounts?: NormalisedData<TrafficCount>[];
@@ -62,11 +60,10 @@ export const Map = ({
       />
       {suburbs.map((suburb) => {
         const active = suburb.id === selectedSuburb;
-        return Object.keys(suburb.geoData).map((suburbName, i) => {
+        return Object.keys(suburb.boundary).map((suburbName, i) => {
           return (
             <GeoLayer
               suburb={suburb}
-              suburbName={suburbName}
               key={`${suburbName},${i}`}
               active={active}
             />

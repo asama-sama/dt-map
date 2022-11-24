@@ -2,27 +2,28 @@ import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { Toggles } from "../components/Toggles";
-import { getEmissionsBySuburb } from "../requests/suburbs";
-import { SuburbsIndexed, InputToggle, Emission, Category } from "../types";
+import {
+  SuburbResponseValue,
+  getEmissionsBySuburb,
+} from "../requests/cosGhgEmissions";
+import { InputToggle, Emission, Category, Suburb } from "../types";
 import { applyRange } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
+import { globalSuburbState } from "../state/global";
 
 import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
 import "./Map.css";
+import { useHookstate } from "@hookstate/core";
+import { getSuburbs } from "../requests/suburbs";
 
-export const Map = ({
-  suburbs,
-  categories,
-  years,
-}: {
-  suburbs: SuburbsIndexed;
-  categories: Category[];
-  years: number[];
-}) => {
+export const CosEmissionsMap = () => {
   type DataView = "aggregate" | "yearly";
 
-  const [emissions, setEmissions] = useState<Emission[]>([]);
+  const suburbState = useHookstate(globalSuburbState);
+  const suburbs = suburbState.get();
+
+  const [emissions, setEmissions] = useState<SuburbResponseValue[]>([]);
   const [selectedSuburb, setSelectedSuburb] = useState<number | undefined>();
   const [categoryToggles, setCategoryToggles] = useState<InputToggle[]>([]);
   const [sortToggles, setSortToggles] = useState<InputToggle[]>([
@@ -41,21 +42,6 @@ export const Map = ({
   const [year, setYear] = useState<number>();
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const categoryToggles: InputToggle[] = categories.map((category) => ({
-          ...category,
-          on: true,
-        }));
-        setCategoryToggles(categoryToggles);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchInitialData();
-  }, [categories]);
-
-  useEffect(() => {
     const fetchEmissions = async () => {
       const categories = categoryToggles
         .filter((categoryToggle) => categoryToggle.on)
@@ -66,17 +52,25 @@ export const Map = ({
       const _emissions = await getEmissionsBySuburb(categories, year, sort);
       setEmissions(_emissions);
     };
-    fetchEmissions();
-  }, [year, categoryToggles, sortToggles]);
 
-  const handleToggleDataView = (dataView: DataView) => {
-    if (dataView === "aggregate") {
-      setYear(undefined);
-    } else if (dataView === "yearly") {
-      setYear(years[0]);
-    }
-    setDataView(dataView);
-  };
+    fetchEmissions();
+  }, []);
+  useEffect(() => {
+    const suburbIdsToFetch = emissions
+      .filter(({ suburbId }) => {
+        return !suburbs[suburbId];
+      })
+      .map(({ suburbId }) => suburbId);
+    if (suburbIdsToFetch.length === 0) return;
+    getSuburbs(suburbIdsToFetch).then((fetchedSuburbs) => {
+      const fetchedSuburbsMap: { [key: number]: Suburb } = {};
+      fetchedSuburbs.forEach((fetchedSuburb) => {
+        if (fetchedSuburb.name === "SYDNEY") return;
+        fetchedSuburbsMap[fetchedSuburb.id] = fetchedSuburb;
+      });
+      suburbState.merge(() => fetchedSuburbsMap);
+    });
+  }, [emissions]);
 
   type SliderProps = {
     min: number;
@@ -93,23 +87,22 @@ export const Map = ({
   const suburbsWithData = emissions
     .map((emission) => ({
       ...suburbs[emission.suburbId],
-      reading: emission.reading,
+      reading: emission.value,
     }))
     .filter(
       (suburbWithdata) =>
-        suburbWithdata.geoData && suburbWithdata.id && suburbWithdata.reading
+        suburbWithdata.boundary && suburbWithdata.id && suburbWithdata.reading
     );
 
   const suburbsWithDataNormalised = applyRange(suburbsWithData);
-
-  years.forEach((year) => {
-    if (year < sliderProps.min) sliderProps.min = year;
-    if (year > sliderProps.max) sliderProps.max = year;
-    sliderProps.marks[year] = {
-      style: { color: "white" },
-      label: year.toString(),
-    };
-  });
+  // years.forEach((year) => {
+  //   if (year < sliderProps.min) sliderProps.min = year;
+  //   if (year > sliderProps.max) sliderProps.max = year;
+  //   sliderProps.marks[year] = {
+  //     style: { color: "white" },
+  //     label: year.toString(),
+  //   };
+  // });
 
   return (
     <div className="MapContainer">
@@ -148,7 +141,7 @@ export const Map = ({
         />
         <div>
           <h3>Aggregation</h3>
-          <label>
+          {/* <label>
             Aggregate
             <input
               type="radio"
@@ -165,7 +158,7 @@ export const Map = ({
               onChange={() => handleToggleDataView("yearly")}
               checked={dataView === "yearly"}
             ></input>
-          </label>
+          </label> */}
           {dataView === "yearly" ? (
             <Slider
               marks={sliderProps.marks}
@@ -184,7 +177,7 @@ export const Map = ({
           )}
         </div>
       </div>
-      <div className="SuburbRankingPanel">
+      {/* <div className="SuburbRankingPanel">
         <b>Ranking</b>
         {suburbsWithData.map((suburb, i) => {
           return (
@@ -198,7 +191,7 @@ export const Map = ({
             </div>
           );
         })}
-      </div>
+      </div> */}
     </div>
   );
 };
