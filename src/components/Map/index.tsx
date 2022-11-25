@@ -65,7 +65,7 @@ export const Map = ({
         .sort((s1, s2) => s1.id - s2.id)
         .map((suburb) => {
           const active = suburb.id === selectedSuburb;
-          return Object.keys(suburb.boundary).map((suburbName, i) => {
+          return Object.keys(suburb.boundary).map((suburbName) => {
             return (
               <GeoLayer
                 suburb={suburb}

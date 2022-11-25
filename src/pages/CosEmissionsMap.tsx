@@ -81,7 +81,6 @@ export const CosEmissionsMap = () => {
         ...cat,
         on: true,
       }));
-      console.log(toggles);
       setCategoryToggles(toggles);
     };
     fetchCategories();
@@ -97,7 +96,7 @@ export const CosEmissionsMap = () => {
     getSuburbs(suburbIdsToFetch).then((fetchedSuburbs) => {
       const fetchedSuburbsMap: { [key: number]: Suburb } = {};
       fetchedSuburbs.forEach((fetchedSuburb) => {
-        if (fetchedSuburb.name === "SYDNEY") return;
+        if (fetchedSuburb.name === "SYDNEY") return; // ignore sydney for now as it is way higher than all other suburbs. TODO: all toggling of suburbs
         fetchedSuburbsMap[fetchedSuburb.id] = fetchedSuburb;
       });
       suburbState.merge(() => fetchedSuburbsMap);
