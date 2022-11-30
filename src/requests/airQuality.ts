@@ -1,3 +1,7 @@
+import { DatewiseCategorySums } from "../types/apiResponseTypes";
+import { Point } from "../types/geography";
+import { dateToString } from "../util";
+
 const { VITE_SERVER_URL } = import.meta.env;
 
 export type AirQualityCategories =
@@ -23,14 +27,26 @@ export const getAirQualityMonthly = async (sites: number[]) => {
   return (await res.json()) as AirQuality[];
 };
 
-export interface AirQualityDataLive extends AirQuality {
-  hour: number;
-  hourDescription: string;
-}
+export type AirQualitySite = {
+  id: number;
+  position: Point;
+  suburb: string;
+  region: string;
+};
 
-export const getAirQualityLive = async (sites: number[]) => {
+export const getAirQualitySites = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/airquality/sites`);
+  return (await res.json()) as AirQualitySite[];
+};
+
+export const getAirQualityReadingsBySite = async (
+  siteId: number,
+  startDate: Date
+) => {
+  const startDateString = dateToString(startDate);
+
   const res = await fetch(
-    `${VITE_SERVER_URL}/airquality/live?sites=${JSON.stringify(sites)}`
+    `${VITE_SERVER_URL}/airquality/?airQualitySiteId=${siteId}&startDate=${startDateString}`
   );
-  return (await res.json()) as AirQualityDataLive[];
+  return (await res.json()) as DatewiseCategorySums;
 };
