@@ -70,14 +70,11 @@ export const AirQualityXTrafficIncidents = () => {
     useState<DatewiseCategorySums>({});
   const [trafficIncidents, setTrafficIncidents] =
     useState<DatewiseCategorySums>({});
+  const [labels, setLabels] = useState<string[]>([]);
 
   const airQualityReadingsBySiteState = useHookstate<AirQualityReadingsBySite>(
     {}
   );
-
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 6);
-  const endDate = new Date();
 
   useEffect(() => {
     const getAndSetAirQualitySites = async () => {
@@ -93,6 +90,10 @@ export const AirQualityXTrafficIncidents = () => {
     const updateAirQualityTrafficIncidentData = async (
       site: AirQualitySite
     ) => {
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+      const endDate = new Date();
+
       const airQualityReadingsBySite = airQualityReadingsBySiteState.get();
       let readings: DatewiseCategorySums = airQualityReadingsBySite[site.id];
 
@@ -112,6 +113,9 @@ export const AirQualityXTrafficIncidents = () => {
         RADIUS
       );
       setTrafficIncidents(trafficIncidents);
+
+      const labels = getLabels(startDate);
+      setLabels(labels);
     };
 
     const site = sites.find((site) => site.on);
@@ -130,7 +134,6 @@ export const AirQualityXTrafficIncidents = () => {
     }
     return labels;
   };
-  const labels = getLabels(startDate);
   return (
     <div className={styles.Overlay}>
       <div className={styles.Lhs}>

@@ -56,7 +56,7 @@ export const CategorySumsLineGraph = ({
     if (Object.keys(dataSet2).length === 0) return;
 
     const getToggles = (dataSet: DatewiseCategorySums) => {
-      const categories: { [key: string]: boolean } = {};
+      const categories: { [key: string]: boolean } = { ALL: true };
       Object.keys(dataSet).forEach((date) => {
         Object.keys(dataSet[date]).map(
           (category) => (categories[category] = true)
@@ -66,13 +66,13 @@ export const CategorySumsLineGraph = ({
       const inputToggles: CategoryInput[] = Object.keys(categories).map(
         (category) => ({
           category,
-          on: false,
+          on: category === "ALL" ? true : false,
         })
       );
       return inputToggles;
     };
-    const categories1 = getToggles(dataSet1);
-    const categories2 = getToggles(dataSet2);
+    const categories1 = getToggles(dataSet1).sort();
+    const categories2 = getToggles(dataSet2).sort();
 
     setCategories1(categories1);
     setCategories2(categories2);
@@ -101,44 +101,68 @@ export const CategorySumsLineGraph = ({
     return <div>Click on a site to see readings</div>;
   }
 
-  const getLabelsAndValues = (
+  const getValues = (
     data: DatewiseCategorySums,
-    categories: CategoryInput[]
+    categories: CategoryInput[],
+    labels: string[]
   ) => {
-    const labels = Object.keys(data);
-    const values = Object.keys(data).map((date) => {
-      const selectedCategory = categories.find(
-        (category) => category.on
-      )?.category;
-      if (!selectedCategory) return 0;
-      return data[date][selectedCategory];
+    // const labels = Object.keys(data);
+    const selectedCategory = categories.find(
+      (category) => category.on
+    )?.category;
+
+    if (!selectedCategory) return [];
+    if (selectedCategory === "ALL") {
+      return labels.map((label) => {
+        let value = 0;
+        for (const category in data[label]) {
+          value += data[label][category];
+        }
+        return value;
+      });
+    }
+    return labels.map((label) => {
+      return (data[label] && data[label][selectedCategory]) || 0;
     });
-    return { labels, values };
   };
-  const { labels: labels1, values: values1 } = getLabelsAndValues(
-    dataSet1,
-    categories1
-  );
-  const { values: values2 } = getLabelsAndValues(dataSet2, categories2);
-  console.log(values2);
+  const values1 = getValues(dataSet1, categories1, labels);
+  const values2 = getValues(dataSet2, categories2, labels);
+
+  const chartOptions = {
+    scales: {
+      y: {
+        type: "linear" as const,
+        display: true,
+        position: "left" as const,
+      },
+      y2: {
+        type: "linear" as const,
+        display: true,
+        position: "right" as const,
+      },
+    },
+  };
 
   return (
     <div>
       <Line
+        options={chartOptions}
         data={{
           labels: labels,
           datasets: [
-            // {
-            //   data: values1,
-            //   borderColor: "rgb(15, 192, 192)",
-            //   tension: 0.5,
-            //   label: label1,
-            // },
+            {
+              data: values1,
+              borderColor: "rgb(15, 192, 192)",
+              tension: 0.5,
+              label: label1,
+              yAxisID: "y",
+            },
             {
               data: values2,
               borderColor: "rgb(150, 10, 10)",
               tension: 0.5,
               label: label2,
+              yAxisID: "y2",
             },
           ],
         }}

@@ -44,7 +44,6 @@ export const getAirQualityReadingsBySite = async (
   startDate: Date
 ) => {
   const startDateString = dateToString(startDate);
-
   const res = await fetch(
     `${VITE_SERVER_URL}/airquality/?airQualitySiteId=${siteId}&startDate=${startDateString}`
   );
