@@ -71,8 +71,15 @@ export const CategorySumsLineGraph = ({
       );
       return inputToggles;
     };
-    const categories1 = getToggles(dataSet1).sort();
-    const categories2 = getToggles(dataSet2).sort();
+
+    const sortCategories = (a: CategoryInput, b: CategoryInput) => {
+      if (a.category === "ALL") return -1;
+      if (b.category === "ALL") return 1;
+      return a.category.localeCompare(b.category);
+    };
+
+    const categories1 = getToggles(dataSet1).sort(sortCategories);
+    const categories2 = getToggles(dataSet2).sort(sortCategories);
 
     setCategories1(categories1);
     setCategories2(categories2);
