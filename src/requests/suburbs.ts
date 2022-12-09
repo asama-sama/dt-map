@@ -22,3 +22,8 @@ export const getSuburbsForApi = async (apiId: number) => {
   const res = await fetch(`${VITE_SERVER_URL}/suburbs/api/${apiId}`);
   return (await res.json()) as ApiSuburb[];
 };
+
+export const getAllSuburbs = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/suburbs/all`);
+  return (await res.json()) as Suburb[];
+};

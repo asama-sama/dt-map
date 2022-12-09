@@ -18,3 +18,23 @@
   flex-direction: column;
   justify-content: center;
 }
+
+.drawRectangle {
+  position: absolute;
+  left: 12px;
+  top: 83px;
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  background: white;
+  z-index: 1000;
+  cursor: default;
+}
+
+.drawRectangle:hover {
+  border: 1px solid lime;
+}
+
+.drawing {
+  background: lime;
+}

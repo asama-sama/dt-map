@@ -39,13 +39,17 @@ export const getAirQualitySites = async () => {
   return (await res.json()) as AirQualitySite[];
 };
 
-export const getAirQualityReadingsBySite = async (
-  siteId: number,
-  startDate: Date
+export const getAirQualityReadingsBySites = async (
+  siteIds: number[],
+  startDate: Date,
+  endDate: Date
 ) => {
+  const airQualitySiteIdsString =
+    "airQualitySiteIds[]=" + siteIds.join("&airQualitySiteIds[]=");
   const startDateString = dateToString(startDate);
+  const endDateString = dateToString(endDate);
   const res = await fetch(
-    `${VITE_SERVER_URL}/airquality/?airQualitySiteId=${siteId}&startDate=${startDateString}`
+    `${VITE_SERVER_URL}/airquality/?${airQualitySiteIdsString}&startDate=${startDateString}&endDate=${endDateString}`
   );
   return (await res.json()) as DatewiseCategorySums;
 };

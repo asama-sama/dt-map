@@ -1,8 +1,18 @@
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Circle } from "react-leaflet";
+import { useState, useEffect, useMemo } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  useMapEvents,
+  Rectangle,
+  GeoJSON,
+} from "react-leaflet";
+import intersect from "@turf/intersect";
+import pointsWithinPolygon from "@turf/points-within-polygon";
+import { points } from "@turf/helpers";
 import {
   AirQualitySite,
-  getAirQualityReadingsBySite,
+  getAirQualityReadingsBySites,
   getAirQualitySites,
 } from "../requests/airQuality";
 
@@ -11,18 +21,164 @@ import { useHookstate } from "@hookstate/core";
 import { DatewiseCategorySums } from "../types/apiResponseTypes";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { Toggleable } from "../types/form";
-import { getTrafficIncidentsForPosition } from "../requests/trafficIncident";
-import { dateToString } from "../util";
+import { getTrafficIncidentsForSuburbs } from "../requests/trafficIncident";
+import { dateToString, polygonFromRectangle } from "../util";
+import { getAllSuburbs } from "../requests/suburbs";
+import { allSuburbState } from "../state/global";
+import { Suburb } from "../types";
+import { LatLngArray, Rectangle as RectangleData } from "../types/geography";
 
-const RADIUS = 3000;
+export type FetchStatuses = {
+  fetchingSiteReadings: boolean;
+  fetchingTrafficIncidents: boolean;
+};
+
+type SetRectangleFn = (rectangle: RectangleData | undefined) => void;
+type MapControlsProps = {
+  setRectangle: SetRectangleFn;
+};
+
+const MapControls = ({ setRectangle }: MapControlsProps) => {
+  const [point1, setPoint1] = useState<LatLngArray>();
+  const [drawRectangle, setDrawRectangle] = useState(false);
+  const [currentRectangle, setCurrentRectangle] = useState<RectangleData>();
+  useMapEvents({
+    click(e) {
+      if (!drawRectangle) return;
+      if (!point1) {
+        setPoint1([e.latlng.lat, e.latlng.lng]);
+      }
+      if (point1) {
+        setRectangle([point1, [e.latlng.lat, e.latlng.lng]]);
+        setDrawRectangle(false);
+      }
+    },
+    mousemove(e) {
+      const { lat, lng } = e.latlng;
+      if (drawRectangle && point1) {
+        const bounds: RectangleData = [point1, [lat, lng]];
+        setCurrentRectangle(bounds);
+      }
+    },
+  });
+
+  const startDrawRectangle = () => {
+    if (!drawRectangle) {
+      setDrawRectangle(true);
+      setCurrentRectangle(undefined);
+      setPoint1(undefined);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className={`${styles.drawRectangle} ${
+          drawRectangle ? styles.drawing : ""
+        }`}
+        onClick={() => startDrawRectangle()}
+      ></div>
+      {currentRectangle && drawRectangle && (
+        <Rectangle
+          bounds={currentRectangle}
+          pathOptions={{ color: "lime", fillColor: "none" }}
+        />
+      )}
+    </>
+  );
+};
+
+type IdExistsMap = { [key: number]: boolean };
 
 const AirQualitySitesMap = ({
   sites,
-  setSites,
+  suburbs,
+  selectedSuburbs,
+  selectedAirQualitySites,
+  setSelectedSuburbs,
+  setSelectedAirQualitySites,
 }: {
   sites: Toggleable<AirQualitySite>[];
-  setSites: React.Dispatch<Toggleable<AirQualitySite>[]>;
+  suburbs: Suburb[];
+  selectedSuburbs: IdExistsMap;
+  selectedAirQualitySites: IdExistsMap;
+  setSelectedSuburbs: (suburbs: IdExistsMap) => void;
+  setSelectedAirQualitySites: (sites: IdExistsMap) => void;
 }) => {
+  const [rectangle, setRectangle] = useState<RectangleData>();
+
+  useEffect(() => {
+    if (!rectangle) {
+      setSelectedAirQualitySites({});
+      setSelectedSuburbs({});
+      return;
+    }
+    const rect = polygonFromRectangle(rectangle);
+    const suburbIds = suburbs.reduce<IdExistsMap>((suburbIds, suburb) => {
+      const intersection = suburb.boundary && intersect(suburb.boundary, rect);
+      if (intersection) {
+        const newSuburbIds = { ...suburbIds };
+        newSuburbIds[suburb.id] = true;
+        return newSuburbIds;
+      }
+      return suburbIds;
+    }, {});
+    setSelectedSuburbs(suburbIds);
+
+    const siteIds = sites.reduce<IdExistsMap>((siteIds, site) => {
+      const sitePoint = points([
+        [site.position.coordinates[0], site.position.coordinates[1]],
+      ]);
+      const pointsWithin = pointsWithinPolygon(sitePoint, rect);
+      if (pointsWithin.features.length > 0) {
+        const newSiteIds = { ...siteIds };
+        newSiteIds[site.id] = true;
+        return newSiteIds;
+      }
+      return siteIds;
+    }, {});
+    setSelectedAirQualitySites(siteIds);
+  }, [rectangle]);
+
+  const suburbsMemo = useMemo(() => {
+    const suburbGeo = suburbs.map((suburb) => {
+      let color = `#a6a6a6`;
+      if (selectedSuburbs[suburb.id]) {
+        color = "#ffed32";
+      }
+      if (!suburb.boundary) return <></>;
+      return (
+        <GeoJSON
+          key={`suburub-${suburb.id}`}
+          data={suburb.boundary}
+          style={{ color }}
+        />
+      );
+    });
+
+    return <>{suburbGeo}</>;
+  }, [suburbs, selectedSuburbs]);
+
+  const airSitesMemo = useMemo(() => {
+    const sitesElms = sites.map((site) => {
+      const siteInRect = selectedAirQualitySites[site.id];
+      return (
+        <CircleMarker
+          key={`site-${site.id}`}
+          center={[site.position.coordinates[1], site.position.coordinates[0]]}
+          radius={5}
+          pathOptions={{
+            color: siteInRect ? "#ff8181" : "#4391c3",
+            fillColor: siteInRect ? "#ff8181" : "#4391c3",
+            fillOpacity: 1,
+          }}
+          pane={"markerPane"}
+        ></CircleMarker>
+      );
+    });
+    return sitesElms;
+  }, [sites, selectedAirQualitySites]);
+
   return (
     <MapContainer
       center={[-33.879, 151]}
@@ -34,34 +190,11 @@ const AirQualitySitesMap = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {sites.map((site) => {
-        return (
-          <Circle
-            key={`site-${site.id}`}
-            center={[
-              site.position.coordinates[1],
-              site.position.coordinates[0],
-            ]}
-            radius={3000}
-            eventHandlers={{
-              click: () => {
-                const newSites = sites.map((s) => ({
-                  ...s,
-                  on: s.id === site.id ? true : false,
-                }));
-                setSites(newSites);
-              },
-            }}
-            pathOptions={{ color: site.on ? "#c3ad43" : "#4391c3" }}
-          ></Circle>
-        );
-      })}
+      <MapControls setRectangle={setRectangle} />
+      {suburbsMemo}
+      {airSitesMemo}
     </MapContainer>
   );
-};
-
-type AirQualityReadingsBySite = {
-  [siteId: number]: DatewiseCategorySums;
 };
 
 export const AirQualityXTrafficIncidents = () => {
@@ -71,10 +204,23 @@ export const AirQualityXTrafficIncidents = () => {
   const [trafficIncidents, setTrafficIncidents] =
     useState<DatewiseCategorySums>({});
   const [labels, setLabels] = useState<string[]>([]);
+  const [selectedSuburbs, setSelectedSuburbs] = useState<IdExistsMap>({});
+  const [selectedAirQualitySites, setSelectedAirQualitySites] =
+    useState<IdExistsMap>({});
+  const [fetchStatuses, setFetchStatuses] = useState<FetchStatuses>({
+    fetchingSiteReadings: false,
+    fetchingTrafficIncidents: false,
+  });
 
-  const airQualityReadingsBySiteState = useHookstate<AirQualityReadingsBySite>(
-    {}
-  );
+  const suburbState = useHookstate(allSuburbState);
+
+  useEffect(() => {
+    const getSuburbs = async () => {
+      const suburbs = await getAllSuburbs();
+      suburbState.set(suburbs);
+    };
+    getSuburbs();
+  }, []);
 
   useEffect(() => {
     const getAndSetAirQualitySites = async () => {
@@ -85,44 +231,55 @@ export const AirQualityXTrafficIncidents = () => {
     getAndSetAirQualitySites();
   }, []);
 
-  // get airquality readings for selected site
   useEffect(() => {
-    const updateAirQualityTrafficIncidentData = async (
-      site: AirQualitySite
-    ) => {
+    const updateAirQualitySiteData = async () => {
       const startDate = new Date();
       startDate.setMonth(startDate.getMonth() - 3);
       const endDate = new Date();
 
-      const airQualityReadingsBySite = airQualityReadingsBySiteState.get();
-      let readings: DatewiseCategorySums = airQualityReadingsBySite[site.id];
-
-      if (!readings) {
-        readings = await getAirQualityReadingsBySite(site.id, startDate);
-        airQualityReadingsBySiteState[site.id].set(readings);
-      }
-      setAirQualitySiteReadings(readings);
-
-      const [lng, lat] = site.position.coordinates;
-
-      const trafficIncidents = await getTrafficIncidentsForPosition(
-        lat,
-        lng,
+      setFetchStatuses({
+        ...fetchStatuses,
+        fetchingSiteReadings: true,
+      });
+      const readings = await getAirQualityReadingsBySites(
+        Object.keys(selectedAirQualitySites).map(Number),
         startDate,
-        endDate,
-        RADIUS
+        endDate
       );
+      setFetchStatuses({
+        ...fetchStatuses,
+        fetchingSiteReadings: false,
+      });
+      setAirQualitySiteReadings(readings);
+    };
+    updateAirQualitySiteData();
+  }, [selectedSuburbs]);
+
+  useEffect(() => {
+    const setTrafficIncidentData = async () => {
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+      const endDate = new Date();
+      setFetchStatuses({
+        ...fetchStatuses,
+        fetchingTrafficIncidents: true,
+      });
+      const trafficIncidents = await getTrafficIncidentsForSuburbs(
+        Object.keys(selectedSuburbs).map(Number),
+        startDate,
+        endDate
+      );
+      setFetchStatuses({
+        ...fetchStatuses,
+        fetchingTrafficIncidents: false,
+      });
       setTrafficIncidents(trafficIncidents);
 
       const labels = getLabels(startDate);
       setLabels(labels);
     };
-
-    const site = sites.find((site) => site.on);
-    if (site) {
-      updateAirQualityTrafficIncidentData(site);
-    }
-  }, [sites]);
+    setTrafficIncidentData();
+  }, [selectedAirQualitySites]);
 
   const getLabels = (startDate: Date) => {
     const labels: string[] = [];
@@ -137,16 +294,28 @@ export const AirQualityXTrafficIncidents = () => {
   return (
     <div className={styles.Overlay}>
       <div className={styles.Lhs}>
-        <AirQualitySitesMap sites={sites} setSites={setSites} />
+        <AirQualitySitesMap
+          sites={sites}
+          suburbs={suburbState.get()}
+          selectedSuburbs={selectedSuburbs}
+          selectedAirQualitySites={selectedAirQualitySites}
+          setSelectedSuburbs={setSelectedSuburbs}
+          setSelectedAirQualitySites={setSelectedAirQualitySites}
+        />
       </div>
       <div className={styles.Rhs}>
-        <CategorySumsLineGraph
-          dataSet1={airQualitySiteReadings}
-          dataSet2={trafficIncidents}
-          label1={"Air Quality"}
-          label2={"Traffic Incidents"}
-          labels={labels}
-        />
+        {fetchStatuses.fetchingSiteReadings ||
+        fetchStatuses.fetchingTrafficIncidents ? (
+          <div>Loading...</div>
+        ) : (
+          <CategorySumsLineGraph
+            dataSet1={airQualitySiteReadings}
+            dataSet2={trafficIncidents}
+            label1={"Air Quality"}
+            label2={"Traffic Incidents"}
+            labels={labels}
+          />
+        )}
       </div>
     </div>
   );
