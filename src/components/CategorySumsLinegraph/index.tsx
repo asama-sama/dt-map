@@ -163,7 +163,6 @@ export const CategorySumsLineGraph = ({
     category: str,
     on: str === aggregation ? true : false,
   }));
-  console.log("toggles", aggregationToggles);
 
   return (
     <div>
