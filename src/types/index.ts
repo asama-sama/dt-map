@@ -82,3 +82,5 @@ export type Api = {
   id: number;
   name: string;
 };
+
+export type TemporalAggregate = "day" | "month" | "year";

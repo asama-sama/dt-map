@@ -4,6 +4,7 @@ import { DatewiseCategorySums } from "../../types/apiResponseTypes";
 import { useEffect, useState } from "react";
 import { Toggleable } from "../../types/form";
 import styles from "./CategorySumsLineGraph.module.css";
+import { TemporalAggregate } from "../../types";
 
 Chart.register(...registerables);
 
@@ -40,15 +41,24 @@ export const CategorySumsLineGraph = ({
   label1,
   label2,
   labels,
+  aggregation,
+  setAggregation,
 }: {
   dataSet1: DatewiseCategorySums;
   dataSet2: DatewiseCategorySums;
   label1: string;
   label2: string;
   labels: string[];
+  aggregation: TemporalAggregate;
+  setAggregation: (aggregate: TemporalAggregate) => void;
 }) => {
   const [categories1, setCategories1] = useState<CategoryInput[]>([]);
   const [categories2, setCategories2] = useState<CategoryInput[]>([]);
+  // const [aggregationToggles, setAggregationToggles] = useState<CategoryInput[]>(
+  //   []
+  // );
+
+  // setAggregationToggles(temporalToggles);
 
   // set up category toggles
   useEffect(() => {
@@ -113,7 +123,6 @@ export const CategorySumsLineGraph = ({
     categories: CategoryInput[],
     labels: string[]
   ) => {
-    // const labels = Object.keys(data);
     const selectedCategory = categories.find(
       (category) => category.on
     )?.category;
@@ -150,6 +159,12 @@ export const CategorySumsLineGraph = ({
     },
   };
 
+  const aggregationToggles = ["day", "month", "year"].map((str) => ({
+    category: str,
+    on: str === aggregation ? true : false,
+  }));
+  console.log("toggles", aggregationToggles);
+
   return (
     <div>
       <Line
@@ -183,6 +198,13 @@ export const CategorySumsLineGraph = ({
           categories={categories2}
           toggleCategory={toggleCategory2}
         />
+        <CategoryToggles
+          categories={aggregationToggles}
+          toggleCategory={(cat) => {
+            if (cat !== "day" && cat !== "month" && cat !== "year") return;
+            setAggregation(cat);
+          }}
+        ></CategoryToggles>
       </div>
     </div>
   );

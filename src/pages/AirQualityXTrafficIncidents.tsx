@@ -29,7 +29,7 @@ import {
 import { dateToString, polygonFromRectangle } from "../util";
 import { getSuburbsByPosition } from "../requests/suburbs";
 import { allSuburbState } from "../state/global";
-import { Suburb } from "../types";
+import { Suburb, TemporalAggregate } from "../types";
 import { LatLngArray, Rectangle as RectangleData } from "../types/geography";
 
 export type FetchStatuses = {
@@ -217,6 +217,7 @@ export const AirQualityXTrafficIncidents = () => {
   });
   const [trafficIncidentSearchParams, setTrafficIncidentSearchParams] =
     useState<TrafficSearchParams>();
+  const [aggregation, setAggregation] = useState<TemporalAggregate>("day");
 
   const suburbState = useHookstate(allSuburbState);
 
@@ -260,7 +261,8 @@ export const AirQualityXTrafficIncidents = () => {
       const readings = await getAirQualityReadingsBySites(
         Object.keys(selectedAirQualitySites).map(Number),
         startDate,
-        endDate
+        endDate,
+        aggregation
       );
       setFetchStatuses({
         ...fetchStatuses,
@@ -269,7 +271,7 @@ export const AirQualityXTrafficIncidents = () => {
       setAirQualitySiteReadings(readings);
     };
     updateAirQualitySiteData();
-  }, [selectedSuburbs]);
+  }, [selectedAirQualitySites, aggregation]);
 
   useEffect(() => {
     const setTrafficIncidentData = async () => {
@@ -283,7 +285,8 @@ export const AirQualityXTrafficIncidents = () => {
       const trafficIncidents = await getTrafficIncidentsForSuburbs(
         Object.keys(selectedSuburbs).map(Number),
         startDate,
-        endDate
+        endDate,
+        aggregation
       );
       setFetchStatuses({
         ...fetchStatuses,
@@ -295,15 +298,27 @@ export const AirQualityXTrafficIncidents = () => {
       setLabels(labels);
     };
     setTrafficIncidentData();
-  }, [selectedAirQualitySites]);
+  }, [selectedSuburbs, aggregation]);
 
   const getLabels = (startDate: Date) => {
     const labels: string[] = [];
     const currentDate = new Date();
+    if (aggregation === "month") {
+      startDate.setDate(1);
+    }
+    if (aggregation === "year") {
+      startDate.setMonth(0);
+    }
     while (startDate < currentDate) {
       const dateString = dateToString(startDate);
       labels.push(dateString);
-      startDate.setDate(startDate.getDate() + 1);
+      if (aggregation === "day") {
+        startDate.setDate(startDate.getDate() + 1);
+      } else if (aggregation === "month") {
+        startDate.setMonth(startDate.getMonth() + 1);
+      } else if (aggregation === "year") {
+        startDate.setFullYear(startDate.getFullYear() + 1);
+      }
     }
     return labels;
   };
@@ -330,6 +345,8 @@ export const AirQualityXTrafficIncidents = () => {
             label1={"Air Quality"}
             label2={"Traffic Incidents"}
             labels={labels}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
           />
         )}
       </div>
