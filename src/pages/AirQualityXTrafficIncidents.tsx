@@ -21,9 +21,13 @@ import { useHookstate } from "@hookstate/core";
 import { DatewiseCategorySums } from "../types/apiResponseTypes";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { Toggleable } from "../types/form";
-import { getTrafficIncidentsForSuburbs } from "../requests/trafficIncident";
+import {
+  getSearchParams,
+  getTrafficIncidentsForSuburbs,
+  TrafficSearchParams,
+} from "../requests/trafficIncident";
 import { dateToString, polygonFromRectangle } from "../util";
-import { getAllSuburbs } from "../requests/suburbs";
+import { getSuburbsByPosition } from "../requests/suburbs";
 import { allSuburbState } from "../state/global";
 import { Suburb } from "../types";
 import { LatLngArray, Rectangle as RectangleData } from "../types/geography";
@@ -211,16 +215,28 @@ export const AirQualityXTrafficIncidents = () => {
     fetchingSiteReadings: false,
     fetchingTrafficIncidents: false,
   });
+  const [trafficIncidentSearchParams, setTrafficIncidentSearchParams] =
+    useState<TrafficSearchParams>();
 
   const suburbState = useHookstate(allSuburbState);
 
   useEffect(() => {
+    const updateSearchParams = async () => {
+      const searchParams = await getSearchParams();
+      setTrafficIncidentSearchParams(searchParams);
+    };
+    updateSearchParams();
+  }, []);
+
+  useEffect(() => {
     const getSuburbs = async () => {
-      const suburbs = await getAllSuburbs();
+      if (!trafficIncidentSearchParams) return;
+      const { longitude, latitude, radius } = trafficIncidentSearchParams;
+      const suburbs = await getSuburbsByPosition(longitude, latitude, radius);
       suburbState.set(suburbs);
     };
     getSuburbs();
-  }, []);
+  }, [trafficIncidentSearchParams]);
 
   useEffect(() => {
     const getAndSetAirQualitySites = async () => {

@@ -16,3 +16,13 @@ export const getTrafficIncidentsForSuburbs = async (
   );
   return (await res.json()) as DatewiseCategorySums;
 };
+
+export type TrafficSearchParams = {
+  latitude: number;
+  longitude: number;
+  radius: number;
+};
+export const getSearchParams = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/trafficincidents/searchparams`);
+  return (await res.json()) as TrafficSearchParams;
+};
