@@ -1,23 +1,22 @@
 import { useState, useEffect, useMemo } from "react";
 
 import {
-  AirQualitySite,
   getAirQualityReadingsBySites,
   getAirQualitySites,
 } from "../requests/airQuality";
 
 import styles from "./AirQualityXTrafficIncidents.module.css";
 import { useHookstate } from "@hookstate/core";
-import { DatewiseCategorySums } from "../types/apiResponseTypes";
+import { DatewiseCategorySums, GeoData } from "../types/apiResponseTypes";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { Toggleable } from "../types/form";
 import {
   getSearchParams,
   getTrafficIncidentsForSuburbs,
   TrafficSearchParams,
+  getSuburbsByPosition,
 } from "../requests/trafficIncident";
 import { dateToString } from "../util";
-import { getSuburbsByPosition } from "../requests/suburbs";
 import { allSuburbState } from "../state/global";
 import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
 import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
@@ -42,7 +41,7 @@ const dateRange: DateRange = {
 };
 
 export const AirQualityXTrafficIncidents = () => {
-  const [sites, setSites] = useState<Toggleable<AirQualitySite>[]>([]);
+  const [sites, setSites] = useState<Toggleable<GeoData>[]>([]);
   const [airQualitySiteReadings, setAirQualitySiteReadings] =
     useState<DatewiseCategorySums>({});
   const [trafficIncidents, setTrafficIncidents] =

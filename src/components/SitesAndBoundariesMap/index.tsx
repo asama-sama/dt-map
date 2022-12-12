@@ -8,9 +8,8 @@ import {
 } from "react-leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { LatLngArray, Rectangle as RectangleData } from "../../types/geography";
-import { IdExistsMap, Suburb } from "../../types";
+import { IdExistsMap } from "../../types";
 import { Toggleable } from "../../types/form";
-import { AirQualitySite } from "../../requests/airQuality";
 import { polygonFromRectangle } from "../../util";
 import intersect from "@turf/intersect";
 import { points } from "@turf/helpers";
@@ -18,6 +17,7 @@ import pointsWithinPolygon from "@turf/points-within-polygon";
 
 import styles from "./SitesAndBoundariesMap.module.css";
 import { FetchStatuses } from "../../pages/AirQualityXTrafficIncidents";
+import { GeoData, GeoDataPolygon } from "../../types/apiResponseTypes";
 
 type SetRectangleFn = (rectangle: RectangleData | undefined) => void;
 type MapControlsProps = {
@@ -83,8 +83,8 @@ export const SitesAndBoundariesMap = ({
   setSelectedSuburbs,
   setSelectedAirQualitySites,
 }: {
-  sites: Toggleable<AirQualitySite>[];
-  suburbs: Suburb[];
+  sites: Toggleable<GeoData>[];
+  suburbs: GeoDataPolygon[];
   fetchStatuses: FetchStatuses;
   selectedSuburbs: IdExistsMap;
   selectedAirQualitySites: IdExistsMap;
@@ -101,7 +101,7 @@ export const SitesAndBoundariesMap = ({
     }
     const rect = polygonFromRectangle(rectangle);
     const suburbIds = suburbs.reduce<IdExistsMap>((suburbIds, suburb) => {
-      const intersection = suburb.boundary && intersect(suburb.boundary, rect);
+      const intersection = suburb.geometry && intersect(suburb.geometry, rect);
       if (intersection) {
         const newSuburbIds: IdExistsMap = { ...suburbIds };
         newSuburbIds[suburb.id] = true;
@@ -112,8 +112,10 @@ export const SitesAndBoundariesMap = ({
     setSelectedSuburbs(suburbIds);
 
     const siteIds = sites.reduce<IdExistsMap>((siteIds, site) => {
+      if (site.geometry.type !== "Point")
+        throw new Error("must be a point object");
       const sitePoint = points([
-        [site.position.coordinates[0], site.position.coordinates[1]],
+        [site.geometry.coordinates[0], site.geometry.coordinates[1]],
       ]);
       const pointsWithin = pointsWithinPolygon(sitePoint, rect);
       if (pointsWithin.features.length > 0) {
@@ -132,11 +134,11 @@ export const SitesAndBoundariesMap = ({
       if (selectedSuburbs[suburb.id]) {
         color = "#ffed32";
       }
-      if (!suburb.boundary) return <></>;
+      if (!suburb.geometry) return <></>;
       return (
         <GeoJSON
-          key={`suburub-${suburb.id}`}
-          data={suburb.boundary}
+          key={`suburb-${suburb.id}`}
+          data={suburb.geometry}
           style={{ color }}
           pathOptions={{
             stroke: false,
@@ -147,14 +149,14 @@ export const SitesAndBoundariesMap = ({
     });
     return <>{suburbGeo}</>;
   }, [suburbs, selectedSuburbs]);
-
   const airSitesMemo = useMemo(() => {
     const sitesElms = sites.map((site) => {
       const siteInRect = selectedAirQualitySites[site.id];
+      if (site.geometry.type !== "Point") return;
       return (
         <CircleMarker
           key={`site-${site.id}`}
-          center={[site.position.coordinates[1], site.position.coordinates[0]]}
+          center={[site.geometry.coordinates[1], site.geometry.coordinates[0]]}
           radius={5}
           pathOptions={{
             color: siteInRect ? "#ff8181" : "#4391c3",

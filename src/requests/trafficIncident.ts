@@ -1,5 +1,8 @@
 import { TemporalAggregate } from "../types";
-import { DatewiseCategorySums } from "../types/apiResponseTypes";
+import {
+  DatewiseCategorySums,
+  GeoDataPolygon,
+} from "../types/apiResponseTypes";
 import { dateToString } from "../util";
 
 const { VITE_SERVER_URL } = import.meta.env;
@@ -27,4 +30,15 @@ export type TrafficSearchParams = {
 export const getSearchParams = async () => {
   const res = await fetch(`${VITE_SERVER_URL}/trafficincidents/searchparams`);
   return (await res.json()) as TrafficSearchParams;
+};
+
+export const getSuburbsByPosition = async (
+  longitude: number,
+  latitude: number,
+  radius: number
+) => {
+  const res = await fetch(
+    `${VITE_SERVER_URL}/trafficincidents/pre?longitude=${longitude}&latitude=${latitude}&radius=${radius}`
+  );
+  return (await res.json()) as GeoDataPolygon[];
 };
