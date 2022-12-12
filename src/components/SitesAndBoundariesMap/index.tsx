@@ -182,7 +182,7 @@ export const SitesAndBoundariesMap = ({
       />
       <MapControls setRectangle={setRectangle} />
       <div className={styles.statusesIndicator}>
-        <h2>Stauses</h2>
+        <h2>Fetch Status</h2>
         {Object.keys(fetchStatuses).map((status) => (
           <div key={status} className={styles.status}>
             <span>{status}</span>

@@ -86,3 +86,8 @@ export type Api = {
 export type TemporalAggregate = "day" | "month" | "year";
 
 export type IdExistsMap = { [key: number]: boolean };
+
+export type DateRange = {
+  startDate: string;
+  endDate: string;
+};

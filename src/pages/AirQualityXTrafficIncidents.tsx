@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import {
   AirQualitySite,
@@ -19,11 +19,26 @@ import {
 import { dateToString } from "../util";
 import { getSuburbsByPosition } from "../requests/suburbs";
 import { allSuburbState } from "../state/global";
-import { IdExistsMap, TemporalAggregate } from "../types";
+import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
 import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
 
 export type FetchStatuses = {
   [key: string]: boolean;
+};
+
+const initialStartDate = new Date();
+initialStartDate.setMonth(initialStartDate.getMonth() - 3);
+
+const initialSelectedDateRange: DateRange = {
+  startDate: dateToString(initialStartDate),
+  endDate: dateToString(new Date()),
+};
+
+const startDate = new Date();
+startDate.setFullYear(startDate.getFullYear() - 3);
+const dateRange: DateRange = {
+  startDate: dateToString(startDate),
+  endDate: dateToString(new Date()),
 };
 
 export const AirQualityXTrafficIncidents = () => {
@@ -32,7 +47,6 @@ export const AirQualityXTrafficIncidents = () => {
     useState<DatewiseCategorySums>({});
   const [trafficIncidents, setTrafficIncidents] =
     useState<DatewiseCategorySums>({});
-  const [labels, setLabels] = useState<string[]>([]);
   const [selectedSuburbs, setSelectedSuburbs] = useState<IdExistsMap>({});
   const [selectedAirQualitySites, setSelectedAirQualitySites] =
     useState<IdExistsMap>({});
@@ -45,6 +59,10 @@ export const AirQualityXTrafficIncidents = () => {
     useState<TrafficSearchParams>();
   const [aggregation, setAggregation] = useState<TemporalAggregate>("day");
 
+  const selectedDateRangeState = useHookstate<DateRange>(
+    initialSelectedDateRange
+  );
+  const dateRangeState = useHookstate<DateRange>(dateRange);
   const suburbState = useHookstate(allSuburbState);
 
   useEffect(() => {
@@ -78,14 +96,11 @@ export const AirQualityXTrafficIncidents = () => {
 
   useEffect(() => {
     const updateAirQualitySiteData = async () => {
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 3);
-      const endDate = new Date();
-
+      const { startDate, endDate } = selectedDateRangeState.get();
       const readings = await getAirQualityReadingsBySites(
         Object.keys(selectedAirQualitySites).map(Number),
-        startDate,
-        endDate,
+        new Date(startDate),
+        new Date(endDate),
         aggregation
       );
       fetchStatusesState.merge(() => ({ siteReadings: false }));
@@ -94,41 +109,34 @@ export const AirQualityXTrafficIncidents = () => {
     };
     fetchStatusesState.merge(() => ({ siteReadings: true }));
     updateAirQualitySiteData();
-  }, [selectedAirQualitySites, aggregation]);
+  }, [selectedAirQualitySites, aggregation, selectedDateRangeState]);
 
   useEffect(() => {
     const setTrafficIncidentData = async () => {
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 3);
-      const endDate = new Date();
-
+      const { startDate, endDate } = selectedDateRangeState.get();
       const trafficIncidents = await getTrafficIncidentsForSuburbs(
         Object.keys(selectedSuburbs).map(Number),
-        startDate,
-        endDate,
+        new Date(startDate),
+        new Date(endDate),
         aggregation
       );
       fetchStatusesState.merge(() => ({ trafficIncidents: false }));
 
       setTrafficIncidents(trafficIncidents);
-
-      const labels = getLabels(startDate);
-      setLabels(labels);
     };
     fetchStatusesState.merge(() => ({ trafficIncidents: true }));
     setTrafficIncidentData();
-  }, [selectedSuburbs, aggregation]);
+  }, [selectedSuburbs, aggregation, selectedDateRangeState]);
 
-  const getLabels = (startDate: Date) => {
+  const getLabels = (startDate: Date, endDate: Date) => {
     const labels: string[] = [];
-    const currentDate = new Date();
     if (aggregation === "month") {
       startDate.setDate(1);
     }
     if (aggregation === "year") {
       startDate.setMonth(0);
     }
-    while (startDate < currentDate) {
+    while (startDate < endDate) {
       const dateString = dateToString(startDate);
       labels.push(dateString);
       if (aggregation === "day") {
@@ -141,6 +149,21 @@ export const AirQualityXTrafficIncidents = () => {
     }
     return labels;
   };
+
+  const graphLabels = useMemo(() => {
+    const { startDate, endDate } = selectedDateRangeState.get();
+    const labels = getLabels(new Date(startDate), new Date(endDate));
+    return labels;
+  }, [selectedDateRangeState, aggregation]);
+
+  const sliderLabels = useMemo(() => {
+    const { startDate: _startDate, endDate: _endDate } = dateRangeState.get();
+    const startDate = new Date(_startDate);
+    const endDate = new Date(_endDate);
+    const labels = getLabels(startDate, endDate);
+    return labels;
+  }, [dateRange]);
+
   const fetchStatuses = fetchStatusesState.get();
   return (
     <div className={styles.Overlay}>
@@ -164,9 +187,11 @@ export const AirQualityXTrafficIncidents = () => {
             dataSet2={trafficIncidents}
             label1={"Air Quality"}
             label2={"Traffic Incidents"}
-            labels={labels}
+            sliderLabels={sliderLabels}
+            graphLabels={graphLabels}
             aggregation={aggregation}
             setAggregation={setAggregation}
+            selectedDateRangeState={selectedDateRangeState}
           />
         )}
       </div>

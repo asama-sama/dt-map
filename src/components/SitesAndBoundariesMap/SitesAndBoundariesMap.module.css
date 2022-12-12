@@ -11,7 +11,7 @@
   border-radius: 3px;
   background: white;
   z-index: 1000;
-  cursor: default;
+  cursor: pointer;
 }
 
 .drawRectangle:hover {
@@ -24,8 +24,8 @@
 
 .statusesIndicator {
   position: absolute;
-  top: 50px;
-  right: 0;
+  left: 0;
+  bottom: 0;
   background-color: #00000054;
   z-index: 1000;
   width: 200px;
