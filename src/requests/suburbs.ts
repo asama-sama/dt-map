@@ -22,3 +22,19 @@ export const getSuburbsForApi = async (apiId: number) => {
   const res = await fetch(`${VITE_SERVER_URL}/suburbs/api/${apiId}`);
   return (await res.json()) as ApiSuburb[];
 };
+
+export const getAllSuburbs = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/suburbs/all`);
+  return (await res.json()) as Suburb[];
+};
+
+export const getSuburbsByPosition = async (
+  longitude: number,
+  latitude: number,
+  radius: number
+) => {
+  const res = await fetch(
+    `${VITE_SERVER_URL}/suburbs/byposition?longitude=${longitude}&latitude=${latitude}&radius=${radius}`
+  );
+  return (await res.json()) as Suburb[];
+};

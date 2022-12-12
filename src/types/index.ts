@@ -25,17 +25,14 @@ export type SuburbJson = {
 export type Suburb = {
   id: number;
   name: string;
-  fetchFailed: boolean;
-  boundary: {
+  boundary?: {
     type: "Polygon";
     coordinates: number[][][];
   };
-  position: {
+  position?: {
     type: "Point";
     coordinates: [];
   };
-  createdAt: string;
-  updatedAt: string;
 };
 
 export interface SuburbWithMapData extends Suburb {
@@ -84,4 +81,13 @@ export interface InputToggle extends Input {
 export type Api = {
   id: number;
   name: string;
+};
+
+export type TemporalAggregate = "day" | "month" | "year";
+
+export type IdExistsMap = { [key: number]: boolean };
+
+export type DateRange = {
+  startDate: string;
+  endDate: string;
 };

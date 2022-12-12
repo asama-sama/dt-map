@@ -4,6 +4,8 @@ import { CosEmissionsMap } from "./pages/CosEmissionsMap";
 import "./App.css";
 import { AirQualityXTrafficIncidents } from "./pages/AirQualityXTrafficIncidents";
 
+import "rc-slider/assets/index.css";
+
 function App() {
   return (
     <div className="App">

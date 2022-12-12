@@ -4,4 +4,33 @@
 
 .CategoryToggleGroup {
   width: 50%;
+  justify-content: space-around;
+}
+
+.CategoryToggleGroup {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 30px;
+  font-size: 12px;
+}
+
+.CategoryToggle {
+  display: block;
+  justify-content: space-around;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 130px;
+  text-align: left;
+  margin-left: 10px;
+}
+
+.dateSliderContainer {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.CategoryToggleGroupRow {
+  display: flex;
+  margin: 0 auto;
 }

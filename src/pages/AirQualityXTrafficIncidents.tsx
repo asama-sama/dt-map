@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Circle } from "react-leaflet";
+import { useState, useEffect, useMemo } from "react";
+
 import {
   AirQualitySite,
-  getAirQualityReadingsBySite,
+  getAirQualityReadingsBySites,
   getAirQualitySites,
 } from "../requests/airQuality";
 
@@ -11,57 +11,34 @@ import { useHookstate } from "@hookstate/core";
 import { DatewiseCategorySums } from "../types/apiResponseTypes";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { Toggleable } from "../types/form";
-import { getTrafficIncidentsForPosition } from "../requests/trafficIncident";
+import {
+  getSearchParams,
+  getTrafficIncidentsForSuburbs,
+  TrafficSearchParams,
+} from "../requests/trafficIncident";
 import { dateToString } from "../util";
+import { getSuburbsByPosition } from "../requests/suburbs";
+import { allSuburbState } from "../state/global";
+import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
+import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
 
-const RADIUS = 3000;
-
-const AirQualitySitesMap = ({
-  sites,
-  setSites,
-}: {
-  sites: Toggleable<AirQualitySite>[];
-  setSites: React.Dispatch<Toggleable<AirQualitySite>[]>;
-}) => {
-  return (
-    <MapContainer
-      center={[-33.879, 151]}
-      zoom={10}
-      scrollWheelZoom={false}
-      style={{ height: "100%", width: "100%", position: "absolute" }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {sites.map((site) => {
-        return (
-          <Circle
-            key={`site-${site.id}`}
-            center={[
-              site.position.coordinates[1],
-              site.position.coordinates[0],
-            ]}
-            radius={3000}
-            eventHandlers={{
-              click: () => {
-                const newSites = sites.map((s) => ({
-                  ...s,
-                  on: s.id === site.id ? true : false,
-                }));
-                setSites(newSites);
-              },
-            }}
-            pathOptions={{ color: site.on ? "#c3ad43" : "#4391c3" }}
-          ></Circle>
-        );
-      })}
-    </MapContainer>
-  );
+export type FetchStatuses = {
+  [key: string]: boolean;
 };
 
-type AirQualityReadingsBySite = {
-  [siteId: number]: DatewiseCategorySums;
+const initialStartDate = new Date();
+initialStartDate.setMonth(initialStartDate.getMonth() - 3);
+
+const initialSelectedDateRange: DateRange = {
+  startDate: dateToString(initialStartDate),
+  endDate: dateToString(new Date()),
+};
+
+const startDate = new Date();
+startDate.setFullYear(startDate.getFullYear() - 3);
+const dateRange: DateRange = {
+  startDate: dateToString(startDate),
+  endDate: dateToString(new Date()),
 };
 
 export const AirQualityXTrafficIncidents = () => {
@@ -70,11 +47,43 @@ export const AirQualityXTrafficIncidents = () => {
     useState<DatewiseCategorySums>({});
   const [trafficIncidents, setTrafficIncidents] =
     useState<DatewiseCategorySums>({});
-  const [labels, setLabels] = useState<string[]>([]);
+  const [selectedSuburbs, setSelectedSuburbs] = useState<IdExistsMap>({});
+  const [selectedAirQualitySites, setSelectedAirQualitySites] =
+    useState<IdExistsMap>({});
+  const fetchStatusesState = useHookstate<FetchStatuses>({
+    siteReadings: false,
+    trafficIncidents: false,
+    suburbs: false,
+  });
+  const [trafficIncidentSearchParams, setTrafficIncidentSearchParams] =
+    useState<TrafficSearchParams>();
+  const [aggregation, setAggregation] = useState<TemporalAggregate>("day");
 
-  const airQualityReadingsBySiteState = useHookstate<AirQualityReadingsBySite>(
-    {}
+  const selectedDateRangeState = useHookstate<DateRange>(
+    initialSelectedDateRange
   );
+  const dateRangeState = useHookstate<DateRange>(dateRange);
+  const suburbState = useHookstate(allSuburbState);
+
+  useEffect(() => {
+    const updateSearchParams = async () => {
+      const searchParams = await getSearchParams();
+      setTrafficIncidentSearchParams(searchParams);
+    };
+    updateSearchParams();
+  }, []);
+
+  useEffect(() => {
+    const getSuburbs = async () => {
+      if (!trafficIncidentSearchParams) return;
+      const { longitude, latitude, radius } = trafficIncidentSearchParams;
+      const suburbs = await getSuburbsByPosition(longitude, latitude, radius);
+      fetchStatusesState.merge(() => ({ suburbs: false }));
+      suburbState.set(suburbs);
+    };
+    fetchStatusesState.merge(() => ({ suburbs: true }));
+    getSuburbs();
+  }, [trafficIncidentSearchParams]);
 
   useEffect(() => {
     const getAndSetAirQualitySites = async () => {
@@ -85,68 +94,106 @@ export const AirQualityXTrafficIncidents = () => {
     getAndSetAirQualitySites();
   }, []);
 
-  // get airquality readings for selected site
   useEffect(() => {
-    const updateAirQualityTrafficIncidentData = async (
-      site: AirQualitySite
-    ) => {
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 3);
-      const endDate = new Date();
-
-      const airQualityReadingsBySite = airQualityReadingsBySiteState.get();
-      let readings: DatewiseCategorySums = airQualityReadingsBySite[site.id];
-
-      if (!readings) {
-        readings = await getAirQualityReadingsBySite(site.id, startDate);
-        airQualityReadingsBySiteState[site.id].set(readings);
-      }
-      setAirQualitySiteReadings(readings);
-
-      const [lng, lat] = site.position.coordinates;
-
-      const trafficIncidents = await getTrafficIncidentsForPosition(
-        lat,
-        lng,
-        startDate,
-        endDate,
-        RADIUS
+    const updateAirQualitySiteData = async () => {
+      const { startDate, endDate } = selectedDateRangeState.get();
+      const readings = await getAirQualityReadingsBySites(
+        Object.keys(selectedAirQualitySites).map(Number),
+        new Date(startDate),
+        new Date(endDate),
+        aggregation
       );
-      setTrafficIncidents(trafficIncidents);
+      fetchStatusesState.merge(() => ({ siteReadings: false }));
 
-      const labels = getLabels(startDate);
-      setLabels(labels);
+      setAirQualitySiteReadings(readings);
     };
+    fetchStatusesState.merge(() => ({ siteReadings: true }));
+    updateAirQualitySiteData();
+  }, [selectedAirQualitySites, aggregation, selectedDateRangeState]);
 
-    const site = sites.find((site) => site.on);
-    if (site) {
-      updateAirQualityTrafficIncidentData(site);
-    }
-  }, [sites]);
+  useEffect(() => {
+    const setTrafficIncidentData = async () => {
+      const { startDate, endDate } = selectedDateRangeState.get();
+      const trafficIncidents = await getTrafficIncidentsForSuburbs(
+        Object.keys(selectedSuburbs).map(Number),
+        new Date(startDate),
+        new Date(endDate),
+        aggregation
+      );
+      fetchStatusesState.merge(() => ({ trafficIncidents: false }));
 
-  const getLabels = (startDate: Date) => {
+      setTrafficIncidents(trafficIncidents);
+    };
+    fetchStatusesState.merge(() => ({ trafficIncidents: true }));
+    setTrafficIncidentData();
+  }, [selectedSuburbs, aggregation, selectedDateRangeState]);
+
+  const getLabels = (startDate: Date, endDate: Date) => {
     const labels: string[] = [];
-    const currentDate = new Date();
-    while (startDate < currentDate) {
+    if (aggregation === "month") {
+      startDate.setDate(1);
+    }
+    if (aggregation === "year") {
+      startDate.setMonth(0);
+    }
+    while (startDate < endDate) {
       const dateString = dateToString(startDate);
       labels.push(dateString);
-      startDate.setDate(startDate.getDate() + 1);
+      if (aggregation === "day") {
+        startDate.setDate(startDate.getDate() + 1);
+      } else if (aggregation === "month") {
+        startDate.setMonth(startDate.getMonth() + 1);
+      } else if (aggregation === "year") {
+        startDate.setFullYear(startDate.getFullYear() + 1);
+      }
     }
     return labels;
   };
+
+  const graphLabels = useMemo(() => {
+    const { startDate, endDate } = selectedDateRangeState.get();
+    const labels = getLabels(new Date(startDate), new Date(endDate));
+    return labels;
+  }, [selectedDateRangeState, aggregation]);
+
+  const sliderLabels = useMemo(() => {
+    const { startDate: _startDate, endDate: _endDate } = dateRangeState.get();
+    const startDate = new Date(_startDate);
+    const endDate = new Date(_endDate);
+    const labels = getLabels(startDate, endDate);
+    return labels;
+  }, [dateRange]);
+
+  const fetchStatuses = fetchStatusesState.get();
   return (
     <div className={styles.Overlay}>
       <div className={styles.Lhs}>
-        <AirQualitySitesMap sites={sites} setSites={setSites} />
+        <SitesAndBoundariesMap
+          sites={sites}
+          suburbs={suburbState.get()}
+          selectedSuburbs={selectedSuburbs}
+          selectedAirQualitySites={selectedAirQualitySites}
+          setSelectedSuburbs={setSelectedSuburbs}
+          setSelectedAirQualitySites={setSelectedAirQualitySites}
+          fetchStatuses={fetchStatusesState.get()}
+        />
       </div>
       <div className={styles.Rhs}>
-        <CategorySumsLineGraph
-          dataSet1={airQualitySiteReadings}
-          dataSet2={trafficIncidents}
-          label1={"Air Quality"}
-          label2={"Traffic Incidents"}
-          labels={labels}
-        />
+        {fetchStatuses.siteReadings || fetchStatuses.trafficIncidents ? (
+          <div>Loading...</div>
+        ) : (
+          <CategorySumsLineGraph
+            dataSet1={airQualitySiteReadings}
+            dataSet2={trafficIncidents}
+            label1={"Air Quality"}
+            label2={"Traffic Incidents"}
+            sliderLabels={sliderLabels}
+            graphLabels={graphLabels}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
+            selectedDateRangeState={selectedDateRangeState}
+          />
+        )}
       </div>
     </div>
   );

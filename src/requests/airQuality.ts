@@ -1,3 +1,4 @@
+import { TemporalAggregate } from "../types";
 import { DatewiseCategorySums } from "../types/apiResponseTypes";
 import { Point } from "../types/geography";
 import { dateToString } from "../util";
@@ -39,13 +40,18 @@ export const getAirQualitySites = async () => {
   return (await res.json()) as AirQualitySite[];
 };
 
-export const getAirQualityReadingsBySite = async (
-  siteId: number,
-  startDate: Date
+export const getAirQualityReadingsBySites = async (
+  siteIds: number[],
+  startDate: Date,
+  endDate: Date,
+  aggregate: TemporalAggregate
 ) => {
+  const airQualitySiteIdsString =
+    "airQualitySiteIds[]=" + siteIds.join("&airQualitySiteIds[]=");
   const startDateString = dateToString(startDate);
+  const endDateString = dateToString(endDate);
   const res = await fetch(
-    `${VITE_SERVER_URL}/airquality/?airQualitySiteId=${siteId}&startDate=${startDateString}`
+    `${VITE_SERVER_URL}/airquality/?${airQualitySiteIdsString}&startDate=${startDateString}&endDate=${endDateString}&aggregate=${aggregate}`
   );
   return (await res.json()) as DatewiseCategorySums;
 };
