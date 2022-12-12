@@ -1,0 +1,38 @@
+.siteAndBoundariesMap {
+  position: relative;
+}
+
+.drawRectangle {
+  position: absolute;
+  left: 12px;
+  top: 83px;
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  background: white;
+  z-index: 1000;
+  cursor: default;
+}
+
+.drawRectangle:hover {
+  border: 1px solid lime;
+}
+
+.drawing {
+  background: lime;
+}
+
+.statusesIndicator {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: #00000054;
+  z-index: 1000;
+  width: 200px;
+  padding: 5px;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+}
