@@ -1,4 +1,3 @@
-import { PreRouteDefinition } from "../consts/SitesAndBoundaries";
 import { TemporalAggregate } from "../types";
 import {
   DatewiseCategorySums,
@@ -33,10 +32,14 @@ export const getSearchParams = async () => {
   return (await res.json()) as TrafficSearchParams;
 };
 
-export const getSuburbsByPosition: PreRouteDefinition = async ({
+export const getSuburbsByPosition = async ({
   longitude,
   latitude,
   radius,
+}: {
+  latitude: number;
+  longitude: number;
+  radius: number;
 }) => {
   const res = await fetch(
     `${VITE_SERVER_URL}/trafficincidents/pre?longitude=${longitude}&latitude=${latitude}&radius=${radius}`

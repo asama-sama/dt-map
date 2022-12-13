@@ -9,15 +9,15 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { LatLngArray, Rectangle as RectangleData } from "../../types/geography";
 import { IdExistsMap } from "../../types";
-import { Toggleable } from "../../types/form";
-import { polygonFromRectangle } from "../../util";
-import intersect from "@turf/intersect";
-import { points } from "@turf/helpers";
-import pointsWithinPolygon from "@turf/points-within-polygon";
 
 import styles from "./SitesAndBoundariesMap.module.css";
 import { FetchStatuses } from "../../pages/AirQualityXTrafficIncidents";
-import { GeoData, GeoDataPolygon } from "../../types/apiResponseTypes";
+import {
+  GeoData,
+  GeoDataPoint,
+  GeoDataPolygon,
+} from "../../types/apiResponseTypes";
+import { getGeoType, getSelectedGeometries } from "../../util/geometry";
 
 type SetRectangleFn = (rectangle: RectangleData | undefined) => void;
 type MapControlsProps = {
@@ -74,101 +74,118 @@ const MapControls = ({ setRectangle }: MapControlsProps) => {
   );
 };
 
-export const SitesAndBoundariesMap = ({
-  sites,
-  suburbs,
-  fetchStatuses,
-  selectedSuburbs,
-  selectedAirQualitySites,
-  setSelectedSuburbs,
-  setSelectedAirQualitySites,
+const PointMarkers = ({
+  geoData,
+  selectedIds,
 }: {
-  sites: Toggleable<GeoData>[];
-  suburbs: GeoDataPolygon[];
+  geoData: GeoDataPoint[];
+  selectedIds: IdExistsMap;
+}) => {
+  const mapElements = geoData.map((geoData) => {
+    const idInRect = selectedIds[geoData.id];
+    return (
+      <CircleMarker
+        key={`site-${geoData.id}`}
+        center={[
+          geoData.geometry.coordinates[1],
+          geoData.geometry.coordinates[0],
+        ]}
+        radius={5}
+        pathOptions={{
+          color: idInRect ? "#ff8181" : "#4391c3",
+          fillColor: idInRect ? "#ff8181" : "#4391c3",
+          fillOpacity: 1,
+        }}
+        pane={"markerPane"}
+      ></CircleMarker>
+    );
+  });
+  return <>{mapElements}</>;
+};
+
+const PolygonBoundaries = ({
+  geoData,
+  selectedIds,
+}: {
+  geoData: GeoDataPolygon[];
+  selectedIds: IdExistsMap;
+}) => {
+  const suburbGeo = geoData.map((geoDataPolygon) => {
+    let color = `#a6a6a6`;
+    if (selectedIds[geoDataPolygon.id]) {
+      color = "#ffed32";
+    }
+    if (!geoDataPolygon.geometry) return <></>;
+    return (
+      <GeoJSON
+        key={`suburb-${geoDataPolygon.id}`}
+        data={geoDataPolygon.geometry}
+        style={{ color }}
+        pathOptions={{
+          stroke: false,
+          fillOpacity: 0.4,
+        }}
+      />
+    );
+  });
+  return <>{suburbGeo}</>;
+};
+
+const mapElementForType = (geoData: GeoData[], selectedIds: IdExistsMap) => {
+  const type = getGeoType(geoData);
+  if (type === "Point") {
+    const geoDataPoints = geoData as GeoDataPoint[];
+    return <PointMarkers geoData={geoDataPoints} selectedIds={selectedIds} />;
+  } else if (type === "Polygon") {
+    const geoDataPolygons = geoData as GeoDataPolygon[];
+    return (
+      <PolygonBoundaries geoData={geoDataPolygons} selectedIds={selectedIds} />
+    );
+  }
+};
+
+export const SitesAndBoundariesMap = ({
+  dataSource1PreData,
+  dataSource2PreData,
+  fetchStatuses,
+  selectedDs2PreIds,
+  selectedDs1PreIds,
+  setSelectedDs2PreIds,
+  setSelectedDs1PreIds,
+}: {
+  dataSource1PreData: GeoData[];
+  dataSource2PreData: GeoData[];
   fetchStatuses: FetchStatuses;
-  selectedSuburbs: IdExistsMap;
-  selectedAirQualitySites: IdExistsMap;
-  setSelectedSuburbs: (suburbs: IdExistsMap) => void;
-  setSelectedAirQualitySites: (sites: IdExistsMap) => void;
+  selectedDs2PreIds: IdExistsMap;
+  selectedDs1PreIds: IdExistsMap;
+  setSelectedDs2PreIds: (suburbs: IdExistsMap) => void;
+  setSelectedDs1PreIds: (sites: IdExistsMap) => void;
 }) => {
   const [rectangle, setRectangle] = useState<RectangleData>();
 
   useEffect(() => {
     if (!rectangle) {
-      setSelectedAirQualitySites({});
-      setSelectedSuburbs({});
+      setSelectedDs1PreIds({});
+      setSelectedDs2PreIds({});
       return;
     }
-    const rect = polygonFromRectangle(rectangle);
-    const suburbIds = suburbs.reduce<IdExistsMap>((suburbIds, suburb) => {
-      const intersection = suburb.geometry && intersect(suburb.geometry, rect);
-      if (intersection) {
-        const newSuburbIds: IdExistsMap = { ...suburbIds };
-        newSuburbIds[suburb.id] = true;
-        return newSuburbIds;
-      }
-      return suburbIds;
-    }, {});
-    setSelectedSuburbs(suburbIds);
 
-    const siteIds = sites.reduce<IdExistsMap>((siteIds, site) => {
-      if (site.geometry.type !== "Point")
-        throw new Error("must be a point object");
-      const sitePoint = points([
-        [site.geometry.coordinates[0], site.geometry.coordinates[1]],
-      ]);
-      const pointsWithin = pointsWithinPolygon(sitePoint, rect);
-      if (pointsWithin.features.length > 0) {
-        const newSiteIds = { ...siteIds };
-        newSiteIds[site.id] = true;
-        return newSiteIds;
-      }
-      return siteIds;
-    }, {});
-    setSelectedAirQualitySites(siteIds);
+    const selectedDs2PreIds = getSelectedGeometries(
+      rectangle,
+      dataSource2PreData
+    );
+    setSelectedDs2PreIds(selectedDs2PreIds);
+
+    const selectedSites = getSelectedGeometries(rectangle, dataSource1PreData);
+    setSelectedDs1PreIds(selectedSites);
   }, [rectangle]);
 
-  const suburbsMemo = useMemo(() => {
-    const suburbGeo = suburbs.map((suburb) => {
-      let color = `#a6a6a6`;
-      if (selectedSuburbs[suburb.id]) {
-        color = "#ffed32";
-      }
-      if (!suburb.geometry) return <></>;
-      return (
-        <GeoJSON
-          key={`suburb-${suburb.id}`}
-          data={suburb.geometry}
-          style={{ color }}
-          pathOptions={{
-            stroke: false,
-            fillOpacity: 0.4,
-          }}
-        />
-      );
-    });
-    return <>{suburbGeo}</>;
-  }, [suburbs, selectedSuburbs]);
-  const airSitesMemo = useMemo(() => {
-    const sitesElms = sites.map((site) => {
-      const siteInRect = selectedAirQualitySites[site.id];
-      if (site.geometry.type !== "Point") return;
-      return (
-        <CircleMarker
-          key={`site-${site.id}`}
-          center={[site.geometry.coordinates[1], site.geometry.coordinates[0]]}
-          radius={5}
-          pathOptions={{
-            color: siteInRect ? "#ff8181" : "#4391c3",
-            fillColor: siteInRect ? "#ff8181" : "#4391c3",
-            fillOpacity: 1,
-          }}
-          pane={"markerPane"}
-        ></CircleMarker>
-      );
-    });
-    return sitesElms;
-  }, [sites, selectedAirQualitySites]);
+  const ds2ElementsMemo = useMemo(() => {
+    return mapElementForType(dataSource2PreData, selectedDs2PreIds);
+  }, [dataSource2PreData, selectedDs2PreIds]);
+  const ds1ElementsMemo = useMemo(() => {
+    return mapElementForType(dataSource1PreData, selectedDs1PreIds);
+  }, [dataSource1PreData, selectedDs1PreIds]);
 
   return (
     <MapContainer
@@ -192,8 +209,8 @@ export const SitesAndBoundariesMap = ({
           </div>
         ))}
       </div>
-      {suburbsMemo}
-      {airSitesMemo}
+      {ds2ElementsMemo}
+      {ds1ElementsMemo}
     </MapContainer>
   );
 };

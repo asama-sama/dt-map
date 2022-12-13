@@ -1,55 +1,51 @@
+import { State } from "@hookstate/core";
 import {
-  getAirQualityReadingsBySites,
-  getAirQualitySites,
-} from "../requests/airQuality";
+  updateAirQualitySites,
+  updateSuburbs,
+  updateTrafficVolumeSites,
+} from "../actions";
+import { getAirQualityReadingsBySites } from "../requests/airQuality";
+import { getTrafficIncidentsForSuburbs } from "../requests/trafficIncident";
+import { getTrafficVolumeReadings } from "../requests/trafficVolume";
 import {
-  getSuburbsByPosition,
-  getTrafficIncidentsForSuburbs,
-} from "../requests/trafficIncident";
-import {
-  getTrafficVolumeReadings,
-  getTrafficVolumeSites,
-} from "../requests/trafficVolume";
+  airQualitySiteState,
+  allSuburbState,
+  trafficVolumeSitesState,
+} from "../state/global";
 import { TemporalAggregate } from "../types";
 import { DatewiseCategorySums, GeoData } from "../types/apiResponseTypes";
 
-type PreRouteArgs = {
-  longitude?: number;
-  latitude?: number;
-  radius?: number;
-};
+export type PreRouteDefinition = () => Promise<void>;
 
-export type PreRouteDefinition = ({
-  longitude,
-  latitude,
-  radius,
-}: PreRouteArgs) => Promise<GeoData[]>;
-
-type Routes = {
-  pre: PreRouteDefinition;
-  data: (
+type RoutesAndData = {
+  prefetch: PreRouteDefinition;
+  datafetch: (
     ids: number[],
     startDate: Date,
     endDate: Date,
     aggregation: TemporalAggregate
   ) => Promise<DatewiseCategorySums>;
+  preData: State<GeoData[], unknown>;
 };
 
-type Apis = {
-  [key: string]: Routes;
+export type Apis = {
+  [key: string]: RoutesAndData;
 };
 
 export const apis: Apis = {
   trafficVolume: {
-    pre: getTrafficVolumeSites,
-    data: getTrafficVolumeReadings,
+    prefetch: updateTrafficVolumeSites,
+    datafetch: getTrafficVolumeReadings,
+    preData: trafficVolumeSitesState,
   },
   trafficIncidents: {
-    pre: getSuburbsByPosition,
-    data: getTrafficIncidentsForSuburbs,
+    prefetch: updateSuburbs,
+    datafetch: getTrafficIncidentsForSuburbs,
+    preData: allSuburbState,
   },
   airQuality: {
-    pre: getAirQualitySites,
-    data: getAirQualityReadingsBySites,
+    prefetch: updateAirQualitySites,
+    datafetch: getAirQualityReadingsBySites,
+    preData: airQualitySiteState,
   },
 };
