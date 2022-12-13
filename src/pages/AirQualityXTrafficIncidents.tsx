@@ -7,7 +7,11 @@ import {
 
 import styles from "./AirQualityXTrafficIncidents.module.css";
 import { useHookstate } from "@hookstate/core";
-import { DatewiseCategorySums, GeoData } from "../types/apiResponseTypes";
+import {
+  DatewiseCategorySums,
+  GeoData,
+  GeoDataPolygon,
+} from "../types/apiResponseTypes";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { Toggleable } from "../types/form";
 import {
@@ -76,7 +80,11 @@ export const AirQualityXTrafficIncidents = () => {
     const getSuburbs = async () => {
       if (!trafficIncidentSearchParams) return;
       const { longitude, latitude, radius } = trafficIncidentSearchParams;
-      const suburbs = await getSuburbsByPosition(longitude, latitude, radius);
+      const suburbs = (await getSuburbsByPosition({
+        longitude,
+        latitude,
+        radius,
+      })) as GeoDataPolygon[];
       fetchStatusesState.merge(() => ({ suburbs: false }));
       suburbState.set(suburbs);
     };

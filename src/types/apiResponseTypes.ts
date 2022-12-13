@@ -15,3 +15,7 @@ export type GeoData = {
 export interface GeoDataPolygon extends GeoData {
   geometry: Polygon;
 }
+
+export interface GeoDataPoint extends GeoData {
+  geometry: Point;
+}

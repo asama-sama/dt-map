@@ -63,3 +63,8 @@ export const polygonFromRectangle = (
   const newRect = polygon(linearRing);
   return newRect;
 };
+
+export const toFetchArray = (idName: string, values: string[]) => {
+  const fetchString = `${idName}[]=` + values.join(`&${idName}[]=`);
+  return fetchString;
+};
