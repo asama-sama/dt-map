@@ -1,17 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 
-import { getAirQualityReadingsBySites } from "../requests/airQuality";
-
 import styles from "./AirQualityXTrafficIncidents.module.css";
-import { State, useHookstate } from "@hookstate/core";
-import { DatewiseCategorySums, GeoData } from "../types/apiResponseTypes";
+import { useHookstate } from "@hookstate/core";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
-import { getTrafficIncidentsForSuburbs } from "../requests/trafficIncident";
 import { dateToString } from "../util";
-import { allSuburbState } from "../state/global";
 import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
 import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
 import { apis, Apis } from "../consts/SitesAndBoundaries";
+import { globalState } from "../state/global";
+import { StatusIndicator } from "../components/StatusIndicator";
 
 export type FetchStatuses = {
   [key: string]: boolean;
@@ -39,9 +36,10 @@ const ApiSelector = ({
         name="apiSelector"
         id="apiSelector"
         onChange={(e) => setDataSource1(e.target.value)}
+        defaultValue={dataSource1}
       >
         {apiKeys.map((key) => (
-          <option value={key} key={key} selected={dataSource1 === key}>
+          <option value={key} key={key}>
             {key}
           </option>
         ))}
@@ -50,9 +48,10 @@ const ApiSelector = ({
         name="apiSelector"
         id="apiSelector"
         onChange={(e) => setDataSource2(e.target.value)}
+        defaultValue={dataSource2}
       >
         {apiKeys.map((key) => (
-          <option value={key} key={key} selected={dataSource2 === key}>
+          <option value={key} key={key}>
             {key}
           </option>
         ))}
@@ -77,28 +76,34 @@ const dateRange: DateRange = {
 };
 
 export const AirQualityXTrafficIncidents = () => {
-  const [dataSource1Pre, setDataSource1Pre] =
-    useState<State<GeoData[], unknown>>();
-  const [airQualitySiteReadings, setAirQualitySiteReadings] =
-    useState<DatewiseCategorySums>({});
-  const [trafficIncidents, setTrafficIncidents] =
-    useState<DatewiseCategorySums>({});
   const [selectedDs2PreElements, setSelectedDs2PreIds] = useState<IdExistsMap>(
     {}
   );
   const [selectedDs1PreIds, setSelectedDs1PreIds] = useState<IdExistsMap>({});
-  const fetchStatusesState = useHookstate<FetchStatuses>({
-    "ds1-prefetch": false,
-    "ds2-prefetch": false,
-  });
+
   const [aggregation, setAggregation] = useState<TemporalAggregate>("day");
   const [dataSource1, setDataSource1] = useState<string>("airQuality");
   const [dataSource2, setDataSource2] = useState<string>("trafficIncidents");
 
+  const fetchStatusesState = useHookstate<FetchStatuses>({
+    "ds1-prefetch": false,
+    "ds2-prefetch": false,
+  });
   const selectedDateRangeState = useHookstate<DateRange>(
     initialSelectedDateRange
   );
   const dateRangeState = useHookstate<DateRange>(dateRange);
+
+  useEffect(() => {
+    const updateDataSource1 = async () => {
+      await apis[dataSource1].prefetch();
+      fetchStatusesState.merge(() => ({ "ds1-prefetch": false }));
+    };
+    fetchStatusesState.merge(() => ({ "ds1-prefetch": true }));
+    updateDataSource1();
+    setSelectedDs1PreIds({});
+    setSelectedDs2PreIds({});
+  }, [dataSource1]);
 
   useEffect(() => {
     const updateDataSource2 = async () => {
@@ -107,50 +112,44 @@ export const AirQualityXTrafficIncidents = () => {
     };
     fetchStatusesState.merge(() => ({ "ds2-prefetch": true }));
     updateDataSource2();
-  }, [dataSource1]);
-
-  useEffect(() => {
-    const updateDataSource1 = async () => {
-      await apis[dataSource1].prefetch();
-      fetchStatusesState.merge(() => ({ "ds1-prefetch": false }));
-      setDataSource1Pre(apis[dataSource1].preData);
-    };
-    fetchStatusesState.merge(() => ({ "ds1-prefetch": true }));
-    updateDataSource1();
+    setSelectedDs2PreIds({});
+    setSelectedDs1PreIds({});
   }, [dataSource2]);
 
   useEffect(() => {
-    const updateAirQualitySiteData = async () => {
+    if (!selectedDs1PreIds) return;
+    const updateDataSource1 = async () => {
       const { startDate, endDate } = selectedDateRangeState.get();
-      const readings = await getAirQualityReadingsBySites(
+      await apis[dataSource1].datafetch(
         Object.keys(selectedDs1PreIds).map(Number),
         new Date(startDate),
         new Date(endDate),
         aggregation
       );
-      fetchStatusesState.merge(() => ({ siteReadings: false }));
-
-      setAirQualitySiteReadings(readings);
+      fetchStatusesState.merge(() => ({ "ds1-data": false }));
     };
-    fetchStatusesState.merge(() => ({ siteReadings: true }));
-    updateAirQualitySiteData();
-  }, [selectedDs1PreIds, aggregation, selectedDateRangeState]);
+    fetchStatusesState.merge(() => ({ "ds1-data": true }));
+    updateDataSource1();
+  }, [
+    selectedDs1PreIds,
+    aggregation,
+    selectedDateRangeState.startDate,
+    selectedDateRangeState.endDate,
+  ]);
 
   useEffect(() => {
-    const setTrafficIncidentData = async () => {
+    const updateDataSource2 = async () => {
       const { startDate, endDate } = selectedDateRangeState.get();
-      const trafficIncidents = await getTrafficIncidentsForSuburbs(
-        Object.keys(selectedDs2PreElements).map(Number),
+      await apis[dataSource2].datafetch(
+        Object.keys(selectedDs1PreIds).map(Number),
         new Date(startDate),
         new Date(endDate),
         aggregation
       );
-      fetchStatusesState.merge(() => ({ trafficIncidents: false }));
-
-      setTrafficIncidents(trafficIncidents);
+      fetchStatusesState.merge(() => ({ "ds2-data": false }));
     };
-    fetchStatusesState.merge(() => ({ trafficIncidents: true }));
-    setTrafficIncidentData();
+    fetchStatusesState.merge(() => ({ "ds2-data": true }));
+    updateDataSource2();
   }, [selectedDs2PreElements, aggregation, selectedDateRangeState]);
 
   const getLabels = (startDate: Date, endDate: Date) => {
@@ -189,21 +188,20 @@ export const AirQualityXTrafficIncidents = () => {
     return labels;
   }, [dateRange]);
 
-  const fetchStatuses = fetchStatusesState.get();
-
-  if (!dataSource1Pre) return;
+  const dataSource1State = useHookstate(globalState[dataSource1].data);
+  const dataSource2State = useHookstate(globalState[dataSource2].data);
 
   return (
     <div className={styles.Overlay}>
       <div className={styles.Lhs}>
+        <StatusIndicator fetchStatuses={fetchStatusesState.get()} />
         <SitesAndBoundariesMap
-          dataSource1PreData={apis[dataSource1].preData.get()}
-          dataSource2PreData={apis[dataSource2].preData.get()}
+          dataSource1PreData={globalState[dataSource1].preData.get()}
+          dataSource2PreData={globalState[dataSource2].preData.get()}
           selectedDs2PreIds={selectedDs2PreElements}
           selectedDs1PreIds={selectedDs1PreIds}
           setSelectedDs2PreIds={setSelectedDs2PreIds}
           setSelectedDs1PreIds={setSelectedDs1PreIds}
-          fetchStatuses={fetchStatusesState.get()}
         />
       </div>
       <div className={styles.Rhs}>
@@ -214,14 +212,14 @@ export const AirQualityXTrafficIncidents = () => {
           setDataSource1={setDataSource1}
           setDataSource2={setDataSource2}
         />
-        {fetchStatuses.siteReadings || fetchStatuses.trafficIncidents ? (
+        {dataSource1State.promised || dataSource2State.promised ? (
           <div>Loading...</div>
         ) : (
           <CategorySumsLineGraph
-            dataSet1={airQualitySiteReadings}
-            dataSet2={trafficIncidents}
-            label1={"Air Quality"}
-            label2={"Traffic Incidents"}
+            dataSet1={dataSource1State.get()}
+            dataSet2={dataSource2State.get()}
+            label1={dataSource1}
+            label2={dataSource2}
             sliderLabels={sliderLabels}
             graphLabels={graphLabels}
             aggregation={aggregation}

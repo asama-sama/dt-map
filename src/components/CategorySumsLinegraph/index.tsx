@@ -13,6 +13,28 @@ Chart.register(...registerables);
 
 type CategoryInput = Toggleable<{ category: string }>;
 
+const getValues = (
+  data: DatewiseCategorySums,
+  categories: CategoryInput[],
+  labels: string[]
+) => {
+  const selectedCategory = categories.find((category) => category.on)?.category;
+
+  if (!selectedCategory) return [];
+  if (selectedCategory === "ALL") {
+    return labels.map((label) => {
+      let value = 0;
+      for (const category in data[label]) {
+        value += data[label][category];
+      }
+      return value;
+    });
+  }
+  return labels.map((label) => {
+    return (data[label] && data[label][selectedCategory]) || 0;
+  });
+};
+
 const CategoryToggles = ({
   categories,
   toggleCategory,
@@ -103,75 +125,6 @@ export const CategorySumsLineGraph = ({
     setCategories2(categories2);
   }, [dataSet1, dataSet2]);
 
-  const toggleCategory1 = (categoryName: string) => {
-    const updatedCategories = categories1.map(({ category }) => ({
-      category,
-      on: categoryName === category ? true : false,
-    }));
-    setCategories1(updatedCategories);
-  };
-
-  const toggleCategory2 = (categoryName: string) => {
-    const updatedCategories = categories2.map(({ category }) => ({
-      category,
-      on: categoryName === category ? true : false,
-    }));
-    setCategories2(updatedCategories);
-  };
-
-  if (
-    Object.keys(dataSet1).length === 0 ||
-    Object.keys(dataSet2).length === 0
-  ) {
-    return <div>Click on a site to see readings</div>;
-  }
-
-  const getValues = (
-    data: DatewiseCategorySums,
-    categories: CategoryInput[],
-    labels: string[]
-  ) => {
-    const selectedCategory = categories.find(
-      (category) => category.on
-    )?.category;
-
-    if (!selectedCategory) return [];
-    if (selectedCategory === "ALL") {
-      return labels.map((label) => {
-        let value = 0;
-        for (const category in data[label]) {
-          value += data[label][category];
-        }
-        return value;
-      });
-    }
-    return labels.map((label) => {
-      return (data[label] && data[label][selectedCategory]) || 0;
-    });
-  };
-  const values1 = getValues(dataSet1, categories1, graphLabels);
-  const values2 = getValues(dataSet2, categories2, graphLabels);
-
-  const chartOptions = {
-    scales: {
-      y: {
-        type: "linear" as const,
-        display: true,
-        position: "left" as const,
-      },
-      y2: {
-        type: "linear" as const,
-        display: true,
-        position: "right" as const,
-      },
-    },
-  };
-
-  const aggregationToggles = ["day", "month", "year"].map((str) => ({
-    category: str,
-    on: str === aggregation ? true : false,
-  }));
-
   const defaultSliderValues: [number, number] = useMemo(() => {
     const { startDate: _startDate, endDate: _endDate } =
       selectedDateRangeState.get();
@@ -216,6 +169,52 @@ export const CategorySumsLineGraph = ({
     };
     return sliderProps;
   }, [sliderLabels]);
+
+  if (
+    Object.keys(dataSet1).length === 0 ||
+    Object.keys(dataSet2).length === 0
+  ) {
+    return <div>Select sites and suburbs to see readings</div>;
+  }
+
+  const toggleCategory1 = (categoryName: string) => {
+    const updatedCategories = categories1.map(({ category }) => ({
+      category,
+      on: categoryName === category ? true : false,
+    }));
+    setCategories1(updatedCategories);
+  };
+
+  const toggleCategory2 = (categoryName: string) => {
+    const updatedCategories = categories2.map(({ category }) => ({
+      category,
+      on: categoryName === category ? true : false,
+    }));
+    setCategories2(updatedCategories);
+  };
+
+  const values1 = getValues(dataSet1, categories1, graphLabels);
+  const values2 = getValues(dataSet2, categories2, graphLabels);
+
+  const chartOptions = {
+    scales: {
+      y: {
+        type: "linear" as const,
+        display: true,
+        position: "left" as const,
+      },
+      y2: {
+        type: "linear" as const,
+        display: true,
+        position: "right" as const,
+      },
+    },
+  };
+
+  const aggregationToggles = ["day", "month", "year"].map((str) => ({
+    category: str,
+    on: str === aggregation ? true : false,
+  }));
 
   const onSliderChange = (sliderValue: number | number[]) => {
     if (typeof sliderValue === "number") return;

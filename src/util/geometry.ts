@@ -44,17 +44,17 @@ const getSelectedPolygons = (
   polygons: GeoDataPolygon[]
 ): IdExistsMap => {
   const rect = polygonFromRectangle(selection);
-  const suburbIds = polygons.reduce<IdExistsMap>((ids, geoDataPolygon) => {
+  const selectedIds = polygons.reduce<IdExistsMap>((ids, geoDataPolygon) => {
     const intersection =
       geoDataPolygon.geometry && intersect(geoDataPolygon.geometry, rect);
     if (intersection) {
-      const newIds: IdExistsMap = { ...suburbIds };
+      const newIds: IdExistsMap = { ...ids };
       newIds[geoDataPolygon.id] = true;
       return newIds;
     }
     return ids;
   }, {});
-  return suburbIds;
+  return selectedIds;
 };
 
 export const getGeoType = (geoDatas: GeoData[]): "Point" | "Polygon" | "" => {

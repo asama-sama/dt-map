@@ -21,18 +21,3 @@
 .drawing {
   background: lime;
 }
-
-.statusesIndicator {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  background-color: #00000054;
-  z-index: 1000;
-  width: 200px;
-  padding: 5px;
-}
-
-.status {
-  display: flex;
-  justify-content: space-between;
-}

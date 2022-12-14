@@ -1,31 +1,26 @@
-import { State } from "@hookstate/core";
 import {
+  updateAirQualityReadings,
   updateAirQualitySites,
   updateSuburbs,
+  updateTrafficIncidents,
+  updateTrafficVolumeReadings,
   updateTrafficVolumeSites,
 } from "../actions";
-import { getAirQualityReadingsBySites } from "../requests/airQuality";
-import { getTrafficIncidentsForSuburbs } from "../requests/trafficIncident";
-import { getTrafficVolumeReadings } from "../requests/trafficVolume";
-import {
-  airQualitySiteState,
-  allSuburbState,
-  trafficVolumeSitesState,
-} from "../state/global";
+
 import { TemporalAggregate } from "../types";
-import { DatewiseCategorySums, GeoData } from "../types/apiResponseTypes";
 
 export type PreRouteDefinition = () => Promise<void>;
 
+export type MainDataFetchDefn = (
+  ids: number[],
+  startDate: Date,
+  endDate: Date,
+  aggregation: TemporalAggregate
+) => Promise<void>;
+
 type RoutesAndData = {
   prefetch: PreRouteDefinition;
-  datafetch: (
-    ids: number[],
-    startDate: Date,
-    endDate: Date,
-    aggregation: TemporalAggregate
-  ) => Promise<DatewiseCategorySums>;
-  preData: State<GeoData[], unknown>;
+  datafetch: MainDataFetchDefn;
 };
 
 export type Apis = {
@@ -35,17 +30,14 @@ export type Apis = {
 export const apis: Apis = {
   trafficVolume: {
     prefetch: updateTrafficVolumeSites,
-    datafetch: getTrafficVolumeReadings,
-    preData: trafficVolumeSitesState,
+    datafetch: updateTrafficVolumeReadings,
   },
   trafficIncidents: {
     prefetch: updateSuburbs,
-    datafetch: getTrafficIncidentsForSuburbs,
-    preData: allSuburbState,
+    datafetch: updateTrafficIncidents,
   },
   airQuality: {
     prefetch: updateAirQualitySites,
-    datafetch: getAirQualityReadingsBySites,
-    preData: airQualitySiteState,
+    datafetch: updateAirQualityReadings,
   },
 };

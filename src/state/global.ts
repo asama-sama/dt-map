@@ -8,27 +8,25 @@ type SuburbState = { [key: number]: Suburb };
 export const globalSuburbState = hookstate<SuburbState>({});
 
 type ApiData = {
-  pre: GeoData[];
+  preData: GeoData[];
   data: DatewiseCategorySums;
 };
 
-// all suburb state
-const globalState = hookstate<{ [key: string]: ApiData }>({
+type GlobalState = {
+  [key: string]: ApiData;
+};
+
+export const globalState = hookstate<GlobalState>({
   trafficVolume: {
-    pre: [],
+    preData: [],
     data: {},
   },
   trafficIncidents: {
-    pre: [],
+    preData: [],
     data: {},
   },
   airQuality: {
-    pre: [],
+    preData: [],
     data: {},
   },
 });
-export const allSuburbState = hookstate<GeoData[]>([]);
-
-export const trafficVolumeSitesState = hookstate<GeoData[]>([]);
-
-export const airQualitySiteState = hookstate<GeoData[]>([]);

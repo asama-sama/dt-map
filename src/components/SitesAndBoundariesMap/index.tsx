@@ -11,7 +11,6 @@ import { LatLngArray, Rectangle as RectangleData } from "../../types/geography";
 import { IdExistsMap } from "../../types";
 
 import styles from "./SitesAndBoundariesMap.module.css";
-import { FetchStatuses } from "../../pages/AirQualityXTrafficIncidents";
 import {
   GeoData,
   GeoDataPoint,
@@ -77,10 +76,33 @@ const MapControls = ({ setRectangle }: MapControlsProps) => {
 const PointMarkers = ({
   geoData,
   selectedIds,
+  selection,
 }: {
   geoData: GeoDataPoint[];
   selectedIds: IdExistsMap;
+  selection: 1 | 2;
 }) => {
+  type SelectionColors = {
+    unselected: string;
+    selected: string;
+  };
+  const selection1Colors: SelectionColors = {
+    unselected: "#212af7",
+    selected: "#2dffe6",
+  };
+
+  const selection2Colors: SelectionColors = {
+    unselected: "#c1a3f6", //#00735f
+    selected: "#ff8181",
+  };
+  console.log("selection", selection);
+  let selectionColors: SelectionColors;
+  if (selection === 1) {
+    selectionColors = selection1Colors;
+  } else {
+    selectionColors = selection2Colors;
+  }
+
   const mapElements = geoData.map((geoData) => {
     const idInRect = selectedIds[geoData.id];
     return (
@@ -90,10 +112,14 @@ const PointMarkers = ({
           geoData.geometry.coordinates[1],
           geoData.geometry.coordinates[0],
         ]}
-        radius={5}
+        radius={2}
         pathOptions={{
-          color: idInRect ? "#ff8181" : "#4391c3",
-          fillColor: idInRect ? "#ff8181" : "#4391c3",
+          color: idInRect
+            ? selectionColors.selected
+            : selectionColors.unselected,
+          fillColor: idInRect
+            ? selectionColors.selected
+            : selectionColors.unselected,
           fillOpacity: 1,
         }}
         pane={"markerPane"}
@@ -131,11 +157,21 @@ const PolygonBoundaries = ({
   return <>{suburbGeo}</>;
 };
 
-const mapElementForType = (geoData: GeoData[], selectedIds: IdExistsMap) => {
+const mapElementForType = (
+  geoData: GeoData[],
+  selectedIds: IdExistsMap,
+  selection: 1 | 2
+) => {
   const type = getGeoType(geoData);
   if (type === "Point") {
     const geoDataPoints = geoData as GeoDataPoint[];
-    return <PointMarkers geoData={geoDataPoints} selectedIds={selectedIds} />;
+    return (
+      <PointMarkers
+        geoData={geoDataPoints}
+        selectedIds={selectedIds}
+        selection={selection}
+      />
+    );
   } else if (type === "Polygon") {
     const geoDataPolygons = geoData as GeoDataPolygon[];
     return (
@@ -147,7 +183,6 @@ const mapElementForType = (geoData: GeoData[], selectedIds: IdExistsMap) => {
 export const SitesAndBoundariesMap = ({
   dataSource1PreData,
   dataSource2PreData,
-  fetchStatuses,
   selectedDs2PreIds,
   selectedDs1PreIds,
   setSelectedDs2PreIds,
@@ -155,7 +190,6 @@ export const SitesAndBoundariesMap = ({
 }: {
   dataSource1PreData: GeoData[];
   dataSource2PreData: GeoData[];
-  fetchStatuses: FetchStatuses;
   selectedDs2PreIds: IdExistsMap;
   selectedDs1PreIds: IdExistsMap;
   setSelectedDs2PreIds: (suburbs: IdExistsMap) => void;
@@ -180,12 +214,13 @@ export const SitesAndBoundariesMap = ({
     setSelectedDs1PreIds(selectedSites);
   }, [rectangle]);
 
-  const ds2ElementsMemo = useMemo(() => {
-    return mapElementForType(dataSource2PreData, selectedDs2PreIds);
-  }, [dataSource2PreData, selectedDs2PreIds]);
   const ds1ElementsMemo = useMemo(() => {
-    return mapElementForType(dataSource1PreData, selectedDs1PreIds);
+    if (!selectedDs1PreIds) return <></>;
+    return mapElementForType(dataSource1PreData, selectedDs1PreIds, 1);
   }, [dataSource1PreData, selectedDs1PreIds]);
+  const ds2ElementsMemo = useMemo(() => {
+    return mapElementForType(dataSource2PreData, selectedDs2PreIds, 2);
+  }, [dataSource2PreData, selectedDs2PreIds]);
 
   return (
     <MapContainer
@@ -200,15 +235,6 @@ export const SitesAndBoundariesMap = ({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapControls setRectangle={setRectangle} />
-      <div className={styles.statusesIndicator}>
-        <h2>Fetch Status</h2>
-        {Object.keys(fetchStatuses).map((status) => (
-          <div key={status} className={styles.status}>
-            <span>{status}</span>
-            <span>{fetchStatuses[status] ? "fetching" : "loaded"}</span>
-          </div>
-        ))}
-      </div>
       {ds2ElementsMemo}
       {ds1ElementsMemo}
     </MapContainer>

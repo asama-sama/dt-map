@@ -1,0 +1,26 @@
+.statusesIndicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background-color: #00000054;
+  z-index: 1000;
+  width: 200px;
+  padding: 5px;
+}
+
+.statusGroup {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status {
+  font-weight: bold;
+}
+
+.loading {
+  color: #fff424;
+}
+
+.loaded {
+  color: #2dff2d;
+}

@@ -62,11 +62,18 @@ export const getTrafficVolumeSites = async () => {
   return sites;
 };
 
-export const getTrafficVolumeReadings = async (
+type DataWiseFetchSignature = (
   stationIds: number[],
   startDate: Date,
   endDate: Date,
   aggregation: TemporalAggregate
+) => Promise<DatewiseCategorySums>;
+
+export const getTrafficVolumeReadings: DataWiseFetchSignature = async (
+  stationIds,
+  startDate,
+  endDate,
+  aggregation
 ) => {
   const fetchArgs = toFetchArray(
     "stationIds",
