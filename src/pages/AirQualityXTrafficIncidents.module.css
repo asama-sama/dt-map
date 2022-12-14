@@ -1,4 +1,4 @@
-.Overlay {
+.Page {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0;
@@ -19,4 +19,13 @@
   justify-content: center;
   overflow-y: auto;
   padding: 10px;
+}
+
+.Overlay {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }

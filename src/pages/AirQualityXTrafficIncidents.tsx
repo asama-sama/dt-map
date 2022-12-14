@@ -6,7 +6,7 @@ import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { dateToString } from "../util";
 import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
 import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
-import { apis, Apis } from "../consts/SitesAndBoundaries";
+import { apis } from "../consts/SitesAndBoundaries";
 import { globalState } from "../state/global";
 import { StatusIndicator } from "../components/StatusIndicator";
 import { Rectangle } from "../types/geography";
@@ -17,55 +17,10 @@ import {
 import { API_CORRELATION_MAP } from "../consts/AnalysisBE";
 import { polygonFromRectangle, polygonToString } from "../util/geometry";
 import { SimpleCorrelationDisplay } from "../components/SimpleCorrelationDisplay";
+import { ApiSelector } from "../components/ApiSelector";
 
 export type FetchStatuses = {
   [key: string]: boolean;
-};
-
-type ApiSelectorParams = {
-  apis: Apis;
-  dataSource1: string;
-  dataSource2: string;
-  setDataSource1: React.Dispatch<React.SetStateAction<string>>;
-  setDataSource2: React.Dispatch<React.SetStateAction<string>>;
-};
-
-const ApiSelector = ({
-  apis,
-  dataSource1,
-  dataSource2,
-  setDataSource1,
-  setDataSource2,
-}: ApiSelectorParams) => {
-  const apiKeys = Object.keys(apis);
-  return (
-    <div>
-      <select
-        name="apiSelector"
-        id="apiSelector"
-        onChange={(e) => setDataSource1(e.target.value)}
-        defaultValue={dataSource1}
-      >
-        {apiKeys.map((key) => (
-          <option value={key} key={key}>
-            {key}
-          </option>
-        ))}
-      </select>
-      <select
-        name="apiSelector"
-        id="apiSelector"
-        onChange={(e) => setDataSource2(e.target.value)}
-        defaultValue={dataSource2}
-      >
-        {apiKeys.map((key) => (
-          <option value={key} key={key}>
-            {key}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
 };
 
 const initialStartDate = new Date();
@@ -228,8 +183,18 @@ export const AirQualityXTrafficIncidents = () => {
   const fetchStatuses = fetchStatusesState.get();
 
   return (
-    <div className={styles.Overlay}>
+    <div className={styles.Page}>
       <div className={styles.Lhs}>
+        <div className={styles.Overlay}>
+          <ApiSelector
+            apis={apis}
+            dataSource1={dataSource1}
+            dataSource2={dataSource2}
+            setDataSource1={setDataSource1}
+            setDataSource2={setDataSource2}
+          />
+        </div>
+
         <StatusIndicator fetchStatuses={fetchStatuses} />
         <SitesAndBoundariesMap
           dataSource1PreData={globalState[dataSource1].preData.get()}
@@ -242,13 +207,6 @@ export const AirQualityXTrafficIncidents = () => {
         />
       </div>
       <div className={styles.Rhs}>
-        <ApiSelector
-          apis={apis}
-          dataSource1={dataSource1}
-          dataSource2={dataSource2}
-          setDataSource1={setDataSource1}
-          setDataSource2={setDataSource2}
-        />
         <SimpleCorrelationDisplay
           simpleCorrelationResults={simpleCorrelation}
           loading={fetchStatuses.correlation}
