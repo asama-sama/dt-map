@@ -1,15 +1,41 @@
 import intersect from "@turf/intersect";
 import { points } from "@turf/helpers";
 import pointsWithinPolygon from "@turf/points-within-polygon";
+import { polygon, Feature, Properties, Polygon } from "@turf/helpers";
 
 import { Rectangle } from "../types/geography";
-import { polygonFromRectangle } from ".";
 import {
   GeoData,
   GeoDataPoint,
   GeoDataPolygon,
 } from "../types/apiResponseTypes";
 import { IdExistsMap } from "../types";
+
+export const polygonToString = (polygon: Feature<Polygon, Properties>) => {
+  const coordinateString = polygon.geometry.coordinates[0]
+    .map(([lng, lat]) => `${lng} ${lat}`)
+    .join(",");
+  const polygonString = `POLYGON((${coordinateString}))`;
+  return polygonString;
+};
+
+export const polygonFromRectangle = (
+  rectangle: Rectangle
+): Feature<Polygon, Properties> => {
+  const [p1, p2] = rectangle;
+
+  const linearRing = [
+    [
+      [p1[1], p1[0]],
+      [p2[1], p1[0]],
+      [p2[1], p2[0]],
+      [p1[1], p2[0]],
+      [p1[1], p1[0]],
+    ],
+  ];
+  const newRect = polygon(linearRing);
+  return newRect;
+};
 
 const getSelectedPoints = (
   selection: Rectangle,

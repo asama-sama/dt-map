@@ -95,7 +95,6 @@ const PointMarkers = ({
     unselected: "#c1a3f6", //#00735f
     selected: "#ff8181",
   };
-  console.log("selection", selection);
   let selectionColors: SelectionColors;
   if (selection === 1) {
     selectionColors = selection1Colors;
@@ -187,6 +186,7 @@ export const SitesAndBoundariesMap = ({
   selectedDs1PreIds,
   setSelectedDs2PreIds,
   setSelectedDs1PreIds,
+  setSelectedRectangle,
 }: {
   dataSource1PreData: GeoData[];
   dataSource2PreData: GeoData[];
@@ -194,6 +194,7 @@ export const SitesAndBoundariesMap = ({
   selectedDs1PreIds: IdExistsMap;
   setSelectedDs2PreIds: (suburbs: IdExistsMap) => void;
   setSelectedDs1PreIds: (sites: IdExistsMap) => void;
+  setSelectedRectangle: (rectangle: RectangleData) => void;
 }) => {
   const [rectangle, setRectangle] = useState<RectangleData>();
 
@@ -203,6 +204,8 @@ export const SitesAndBoundariesMap = ({
       setSelectedDs2PreIds({});
       return;
     }
+
+    setSelectedRectangle(rectangle);
 
     const selectedDs2PreIds = getSelectedGeometries(
       rectangle,

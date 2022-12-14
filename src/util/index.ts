@@ -1,6 +1,3 @@
-import { Rectangle } from "../types/geography";
-import { polygon, Feature, Properties, Polygon } from "@turf/helpers";
-
 export type NonNormalisedData<T> = T & {
   reading: number | null;
 };
@@ -44,24 +41,6 @@ export const dateToString = (date: Date) => {
     2,
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
-};
-
-export const polygonFromRectangle = (
-  rectangle: Rectangle
-): Feature<Polygon, Properties> => {
-  const [p1, p2] = rectangle;
-
-  const linearRing = [
-    [
-      [p1[1], p1[0]],
-      [p2[1], p1[0]],
-      [p2[1], p2[0]],
-      [p1[1], p2[0]],
-      [p1[1], p1[0]],
-    ],
-  ];
-  const newRect = polygon(linearRing);
-  return newRect;
 };
 
 export const toFetchArray = (idName: string, values: string[]) => {

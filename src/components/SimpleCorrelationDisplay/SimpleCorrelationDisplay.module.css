@@ -1,0 +1,29 @@
+.SimpleCorrelationDisplay {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: auto;
+  padding: 5px;
+}
+
+.Header {
+  display: contents;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.CorrelationResult {
+  display: contents;
+}
+
+.CorrelationValue {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.LoaderContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}

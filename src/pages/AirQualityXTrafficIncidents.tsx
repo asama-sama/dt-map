@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { useHookstate } from "@hookstate/core";
 
 import styles from "./AirQualityXTrafficIncidents.module.css";
-import { useHookstate } from "@hookstate/core";
 import { CategorySumsLineGraph } from "../components/CategorySumsLinegraph";
 import { dateToString } from "../util";
 import { DateRange, IdExistsMap, TemporalAggregate } from "../types";
@@ -9,6 +9,14 @@ import { SitesAndBoundariesMap } from "../components/SitesAndBoundariesMap";
 import { apis, Apis } from "../consts/SitesAndBoundaries";
 import { globalState } from "../state/global";
 import { StatusIndicator } from "../components/StatusIndicator";
+import { Rectangle } from "../types/geography";
+import {
+  getSimpleCorrelation,
+  SimpleCorrelationResult,
+} from "../requests/analysisBE";
+import { API_CORRELATION_MAP } from "../consts/AnalysisBE";
+import { polygonFromRectangle, polygonToString } from "../util/geometry";
+import { SimpleCorrelationDisplay } from "../components/SimpleCorrelationDisplay";
 
 export type FetchStatuses = {
   [key: string]: boolean;
@@ -84,6 +92,10 @@ export const AirQualityXTrafficIncidents = () => {
   const [aggregation, setAggregation] = useState<TemporalAggregate>("day");
   const [dataSource1, setDataSource1] = useState<string>("airQuality");
   const [dataSource2, setDataSource2] = useState<string>("trafficIncidents");
+  const [selectedRectangle, setSelectedRectangle] = useState<Rectangle>();
+  const [simpleCorrelation, setSimpleCorrelation] = useState<
+    SimpleCorrelationResult[]
+  >([]);
 
   const fetchStatusesState = useHookstate<FetchStatuses>({
     "ds1-prefetch": false,
@@ -94,6 +106,13 @@ export const AirQualityXTrafficIncidents = () => {
   );
   const dateRangeState = useHookstate<DateRange>(dateRange);
 
+  const resetState = () => {
+    setSelectedDs1PreIds({});
+    setSelectedDs2PreIds({});
+    setSelectedRectangle(undefined);
+    setSimpleCorrelation([]);
+  };
+
   useEffect(() => {
     const updateDataSource1 = async () => {
       await apis[dataSource1].prefetch();
@@ -101,8 +120,7 @@ export const AirQualityXTrafficIncidents = () => {
     };
     fetchStatusesState.merge(() => ({ "ds1-prefetch": true }));
     updateDataSource1();
-    setSelectedDs1PreIds({});
-    setSelectedDs2PreIds({});
+    resetState();
   }, [dataSource1]);
 
   useEffect(() => {
@@ -112,8 +130,7 @@ export const AirQualityXTrafficIncidents = () => {
     };
     fetchStatusesState.merge(() => ({ "ds2-prefetch": true }));
     updateDataSource2();
-    setSelectedDs2PreIds({});
-    setSelectedDs1PreIds({});
+    resetState();
   }, [dataSource2]);
 
   useEffect(() => {
@@ -130,12 +147,7 @@ export const AirQualityXTrafficIncidents = () => {
     };
     fetchStatusesState.merge(() => ({ "ds1-data": true }));
     updateDataSource1();
-  }, [
-    selectedDs1PreIds,
-    aggregation,
-    selectedDateRangeState.startDate,
-    selectedDateRangeState.endDate,
-  ]);
+  }, [selectedDs1PreIds, aggregation, selectedDateRangeState]);
 
   useEffect(() => {
     const updateDataSource2 = async () => {
@@ -151,6 +163,28 @@ export const AirQualityXTrafficIncidents = () => {
     fetchStatusesState.merge(() => ({ "ds2-data": true }));
     updateDataSource2();
   }, [selectedDs2PreElements, aggregation, selectedDateRangeState]);
+
+  useEffect(() => {
+    const runSimpleCorrelation = async (selectedRectangle: Rectangle) => {
+      const ds1 = API_CORRELATION_MAP[dataSource1];
+      const ds2 = API_CORRELATION_MAP[dataSource2];
+      const { startDate, endDate } = selectedDateRangeState.get();
+      const polygon = polygonFromRectangle(selectedRectangle);
+      const polygonString = polygonToString(polygon);
+      const res = await getSimpleCorrelation(
+        ds1,
+        ds2,
+        startDate,
+        endDate,
+        polygonString
+      );
+      setSimpleCorrelation(res);
+      fetchStatusesState.merge(() => ({ correlation: false }));
+    };
+    if (!selectedRectangle) return;
+    fetchStatusesState.merge(() => ({ correlation: true }));
+    runSimpleCorrelation(selectedRectangle);
+  }, [selectedRectangle, selectedDateRangeState]);
 
   const getLabels = (startDate: Date, endDate: Date) => {
     const labels: string[] = [];
@@ -191,10 +225,12 @@ export const AirQualityXTrafficIncidents = () => {
   const dataSource1State = useHookstate(globalState[dataSource1].data);
   const dataSource2State = useHookstate(globalState[dataSource2].data);
 
+  const fetchStatuses = fetchStatusesState.get();
+
   return (
     <div className={styles.Overlay}>
       <div className={styles.Lhs}>
-        <StatusIndicator fetchStatuses={fetchStatusesState.get()} />
+        <StatusIndicator fetchStatuses={fetchStatuses} />
         <SitesAndBoundariesMap
           dataSource1PreData={globalState[dataSource1].preData.get()}
           dataSource2PreData={globalState[dataSource2].preData.get()}
@@ -202,6 +238,7 @@ export const AirQualityXTrafficIncidents = () => {
           selectedDs1PreIds={selectedDs1PreIds}
           setSelectedDs2PreIds={setSelectedDs2PreIds}
           setSelectedDs1PreIds={setSelectedDs1PreIds}
+          setSelectedRectangle={setSelectedRectangle}
         />
       </div>
       <div className={styles.Rhs}>
@@ -212,6 +249,11 @@ export const AirQualityXTrafficIncidents = () => {
           setDataSource1={setDataSource1}
           setDataSource2={setDataSource2}
         />
+        <SimpleCorrelationDisplay
+          simpleCorrelationResults={simpleCorrelation}
+          loading={fetchStatuses.correlation}
+        />
+
         {dataSource1State.promised || dataSource2State.promised ? (
           <div>Loading...</div>
         ) : (
