@@ -6,7 +6,7 @@ export type Point = {
 
 export type Polygon = {
   type: "Polygon";
-  coordinates: [[number, number], [number, number]];
+  coordinates: number[][][];
 };
 
 export type LatLng = {

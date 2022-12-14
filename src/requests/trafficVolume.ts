@@ -1,3 +1,7 @@
+import { TemporalAggregate } from "../types";
+import { DatewiseCategorySums, GeoDataPoint } from "../types/apiResponseTypes";
+import { dateToString, toFetchArray } from "../util";
+
 const { VITE_SERVER_URL } = import.meta.env;
 
 export type Station = {
@@ -50,4 +54,36 @@ export const getMonthlyCountsForYear = async (
     countId: i,
   }));
   return counts;
+};
+
+export const getTrafficVolumeSites = async () => {
+  const res = await fetch(`${VITE_SERVER_URL}/trafficvolume/pre`);
+  const sites = (await res.json()) as GeoDataPoint[];
+  return sites;
+};
+
+type DataWiseFetchSignature = (
+  stationIds: number[],
+  startDate: Date,
+  endDate: Date,
+  aggregation: TemporalAggregate
+) => Promise<DatewiseCategorySums>;
+
+export const getTrafficVolumeReadings: DataWiseFetchSignature = async (
+  stationIds,
+  startDate,
+  endDate,
+  aggregation
+) => {
+  const fetchArgs = toFetchArray(
+    "stationIds",
+    stationIds.map((id) => id.toString())
+  );
+  const res = await fetch(
+    `${VITE_SERVER_URL}/trafficvolume/?${fetchArgs}&startDate=${dateToString(
+      startDate
+    )}&endDate=${dateToString(endDate)}&aggregate=${aggregation}`
+  );
+  const data = (await res.json()) as DatewiseCategorySums;
+  return data;
 };

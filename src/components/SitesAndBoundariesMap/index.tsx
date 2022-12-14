@@ -8,16 +8,15 @@ import {
 } from "react-leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { LatLngArray, Rectangle as RectangleData } from "../../types/geography";
-import { IdExistsMap, Suburb } from "../../types";
-import { Toggleable } from "../../types/form";
-import { AirQualitySite } from "../../requests/airQuality";
-import { polygonFromRectangle } from "../../util";
-import intersect from "@turf/intersect";
-import { points } from "@turf/helpers";
-import pointsWithinPolygon from "@turf/points-within-polygon";
+import { IdExistsMap } from "../../types";
 
 import styles from "./SitesAndBoundariesMap.module.css";
-import { FetchStatuses } from "../../pages/AirQualityXTrafficIncidents";
+import {
+  GeoData,
+  GeoDataPoint,
+  GeoDataPolygon,
+} from "../../types/apiResponseTypes";
+import { getGeoType, getSelectedGeometries } from "../../util/geometry";
 
 type SetRectangleFn = (rectangle: RectangleData | undefined) => void;
 type MapControlsProps = {
@@ -74,99 +73,154 @@ const MapControls = ({ setRectangle }: MapControlsProps) => {
   );
 };
 
-export const SitesAndBoundariesMap = ({
-  sites,
-  suburbs,
-  fetchStatuses,
-  selectedSuburbs,
-  selectedAirQualitySites,
-  setSelectedSuburbs,
-  setSelectedAirQualitySites,
+const PointMarkers = ({
+  geoData,
+  selectedIds,
+  selection,
 }: {
-  sites: Toggleable<AirQualitySite>[];
-  suburbs: Suburb[];
-  fetchStatuses: FetchStatuses;
-  selectedSuburbs: IdExistsMap;
-  selectedAirQualitySites: IdExistsMap;
-  setSelectedSuburbs: (suburbs: IdExistsMap) => void;
-  setSelectedAirQualitySites: (sites: IdExistsMap) => void;
+  geoData: GeoDataPoint[];
+  selectedIds: IdExistsMap;
+  selection: 1 | 2;
+}) => {
+  type SelectionColors = {
+    unselected: string;
+    selected: string;
+  };
+  const selection1Colors: SelectionColors = {
+    unselected: "#212af7",
+    selected: "#2dffe6",
+  };
+
+  const selection2Colors: SelectionColors = {
+    unselected: "#c1a3f6", //#00735f
+    selected: "#ff8181",
+  };
+  console.log("selection", selection);
+  let selectionColors: SelectionColors;
+  if (selection === 1) {
+    selectionColors = selection1Colors;
+  } else {
+    selectionColors = selection2Colors;
+  }
+
+  const mapElements = geoData.map((geoData) => {
+    const idInRect = selectedIds[geoData.id];
+    return (
+      <CircleMarker
+        key={`site-${geoData.id}`}
+        center={[
+          geoData.geometry.coordinates[1],
+          geoData.geometry.coordinates[0],
+        ]}
+        radius={2}
+        pathOptions={{
+          color: idInRect
+            ? selectionColors.selected
+            : selectionColors.unselected,
+          fillColor: idInRect
+            ? selectionColors.selected
+            : selectionColors.unselected,
+          fillOpacity: 1,
+        }}
+        pane={"markerPane"}
+      ></CircleMarker>
+    );
+  });
+  return <>{mapElements}</>;
+};
+
+const PolygonBoundaries = ({
+  geoData,
+  selectedIds,
+}: {
+  geoData: GeoDataPolygon[];
+  selectedIds: IdExistsMap;
+}) => {
+  const suburbGeo = geoData.map((geoDataPolygon) => {
+    let color = `#a6a6a6`;
+    if (selectedIds[geoDataPolygon.id]) {
+      color = "#ffed32";
+    }
+    if (!geoDataPolygon.geometry) return <></>;
+    return (
+      <GeoJSON
+        key={`suburb-${geoDataPolygon.id}`}
+        data={geoDataPolygon.geometry}
+        style={{ color }}
+        pathOptions={{
+          stroke: false,
+          fillOpacity: 0.4,
+        }}
+      />
+    );
+  });
+  return <>{suburbGeo}</>;
+};
+
+const mapElementForType = (
+  geoData: GeoData[],
+  selectedIds: IdExistsMap,
+  selection: 1 | 2
+) => {
+  const type = getGeoType(geoData);
+  if (type === "Point") {
+    const geoDataPoints = geoData as GeoDataPoint[];
+    return (
+      <PointMarkers
+        geoData={geoDataPoints}
+        selectedIds={selectedIds}
+        selection={selection}
+      />
+    );
+  } else if (type === "Polygon") {
+    const geoDataPolygons = geoData as GeoDataPolygon[];
+    return (
+      <PolygonBoundaries geoData={geoDataPolygons} selectedIds={selectedIds} />
+    );
+  }
+};
+
+export const SitesAndBoundariesMap = ({
+  dataSource1PreData,
+  dataSource2PreData,
+  selectedDs2PreIds,
+  selectedDs1PreIds,
+  setSelectedDs2PreIds,
+  setSelectedDs1PreIds,
+}: {
+  dataSource1PreData: GeoData[];
+  dataSource2PreData: GeoData[];
+  selectedDs2PreIds: IdExistsMap;
+  selectedDs1PreIds: IdExistsMap;
+  setSelectedDs2PreIds: (suburbs: IdExistsMap) => void;
+  setSelectedDs1PreIds: (sites: IdExistsMap) => void;
 }) => {
   const [rectangle, setRectangle] = useState<RectangleData>();
 
   useEffect(() => {
     if (!rectangle) {
-      setSelectedAirQualitySites({});
-      setSelectedSuburbs({});
+      setSelectedDs1PreIds({});
+      setSelectedDs2PreIds({});
       return;
     }
-    const rect = polygonFromRectangle(rectangle);
-    const suburbIds = suburbs.reduce<IdExistsMap>((suburbIds, suburb) => {
-      const intersection = suburb.boundary && intersect(suburb.boundary, rect);
-      if (intersection) {
-        const newSuburbIds: IdExistsMap = { ...suburbIds };
-        newSuburbIds[suburb.id] = true;
-        return newSuburbIds;
-      }
-      return suburbIds;
-    }, {});
-    setSelectedSuburbs(suburbIds);
 
-    const siteIds = sites.reduce<IdExistsMap>((siteIds, site) => {
-      const sitePoint = points([
-        [site.position.coordinates[0], site.position.coordinates[1]],
-      ]);
-      const pointsWithin = pointsWithinPolygon(sitePoint, rect);
-      if (pointsWithin.features.length > 0) {
-        const newSiteIds = { ...siteIds };
-        newSiteIds[site.id] = true;
-        return newSiteIds;
-      }
-      return siteIds;
-    }, {});
-    setSelectedAirQualitySites(siteIds);
+    const selectedDs2PreIds = getSelectedGeometries(
+      rectangle,
+      dataSource2PreData
+    );
+    setSelectedDs2PreIds(selectedDs2PreIds);
+
+    const selectedSites = getSelectedGeometries(rectangle, dataSource1PreData);
+    setSelectedDs1PreIds(selectedSites);
   }, [rectangle]);
 
-  const suburbsMemo = useMemo(() => {
-    const suburbGeo = suburbs.map((suburb) => {
-      let color = `#a6a6a6`;
-      if (selectedSuburbs[suburb.id]) {
-        color = "#ffed32";
-      }
-      if (!suburb.boundary) return <></>;
-      return (
-        <GeoJSON
-          key={`suburub-${suburb.id}`}
-          data={suburb.boundary}
-          style={{ color }}
-          pathOptions={{
-            stroke: false,
-            fillOpacity: 0.4,
-          }}
-        />
-      );
-    });
-    return <>{suburbGeo}</>;
-  }, [suburbs, selectedSuburbs]);
-
-  const airSitesMemo = useMemo(() => {
-    const sitesElms = sites.map((site) => {
-      const siteInRect = selectedAirQualitySites[site.id];
-      return (
-        <CircleMarker
-          key={`site-${site.id}`}
-          center={[site.position.coordinates[1], site.position.coordinates[0]]}
-          radius={5}
-          pathOptions={{
-            color: siteInRect ? "#ff8181" : "#4391c3",
-            fillColor: siteInRect ? "#ff8181" : "#4391c3",
-            fillOpacity: 1,
-          }}
-          pane={"markerPane"}
-        ></CircleMarker>
-      );
-    });
-    return sitesElms;
-  }, [sites, selectedAirQualitySites]);
+  const ds1ElementsMemo = useMemo(() => {
+    if (!selectedDs1PreIds) return <></>;
+    return mapElementForType(dataSource1PreData, selectedDs1PreIds, 1);
+  }, [dataSource1PreData, selectedDs1PreIds]);
+  const ds2ElementsMemo = useMemo(() => {
+    return mapElementForType(dataSource2PreData, selectedDs2PreIds, 2);
+  }, [dataSource2PreData, selectedDs2PreIds]);
 
   return (
     <MapContainer
@@ -181,17 +235,8 @@ export const SitesAndBoundariesMap = ({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapControls setRectangle={setRectangle} />
-      <div className={styles.statusesIndicator}>
-        <h2>Fetch Status</h2>
-        {Object.keys(fetchStatuses).map((status) => (
-          <div key={status} className={styles.status}>
-            <span>{status}</span>
-            <span>{fetchStatuses[status] ? "fetching" : "loaded"}</span>
-          </div>
-        ))}
-      </div>
-      {suburbsMemo}
-      {airSitesMemo}
+      {ds2ElementsMemo}
+      {ds1ElementsMemo}
     </MapContainer>
   );
 };

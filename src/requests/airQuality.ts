@@ -1,5 +1,5 @@
 import { TemporalAggregate } from "../types";
-import { DatewiseCategorySums } from "../types/apiResponseTypes";
+import { DatewiseCategorySums, GeoDataPoint } from "../types/apiResponseTypes";
 import { Point } from "../types/geography";
 import { dateToString } from "../util";
 
@@ -28,16 +28,13 @@ export const getAirQualityMonthly = async (sites: number[]) => {
   return (await res.json()) as AirQuality[];
 };
 
-export type AirQualitySite = {
-  id: number;
-  position: Point;
-  suburb: string;
-  region: string;
-};
-
 export const getAirQualitySites = async () => {
-  const res = await fetch(`${VITE_SERVER_URL}/airquality/sites`);
-  return (await res.json()) as AirQualitySite[];
+  const res = await fetch(`${VITE_SERVER_URL}/airquality/pre`);
+  const geoData = (await res.json()) as GeoDataPoint[];
+  for (const data of geoData) {
+    data.geometry as Point;
+  }
+  return geoData;
 };
 
 export const getAirQualityReadingsBySites = async (
