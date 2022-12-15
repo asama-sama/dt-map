@@ -167,23 +167,6 @@ export const CosEmissionsMap = () => {
               checked={dataView === "yearly"}
             ></input>
           </label>
-          {dataView === "yearly" ? (
-            <Slider
-              marks={sliderProps.marks}
-              step={null}
-              min={sliderProps.min}
-              max={sliderProps.max}
-              onChange={(year) => {
-                if (!Array.isArray(year)) {
-                  setYear(year);
-                }
-                setSelectedSuburb(undefined);
-              }}
-              value={year}
-            />
-          ) : (
-            <></>
-          )}
           <div>
             {sortToggles.map((toggle, i) => (
               <span key={`sortToggle-${i}`}>
@@ -206,6 +189,25 @@ export const CosEmissionsMap = () => {
           </div>
         </div>
       </div>
+      {dataView === "yearly" ? (
+        <div className={"SliderPanel"}>
+          <Slider
+            marks={sliderProps.marks}
+            step={null}
+            min={sliderProps.min}
+            max={sliderProps.max}
+            onChange={(year) => {
+              if (!Array.isArray(year)) {
+                setYear(year);
+              }
+              setSelectedSuburb(undefined);
+            }}
+            value={year}
+          />
+        </div>
+      ) : (
+        <></>
+      )}
       <div className="SuburbRankingPanel">
         <b>Ranking</b>
         {suburbsWithDataNormalised.map((suburb, i) => {
