@@ -182,6 +182,18 @@ export const AirQualityXTrafficIncidents = () => {
 
   const fetchStatuses = fetchStatusesState.get();
 
+  const correlationForGranularity = simpleCorrelation.filter((corr) => {
+    let granularity;
+    if (aggregation === "day") {
+      granularity = "daily";
+    } else if (aggregation === "month") {
+      granularity = "monthly";
+    } else if (aggregation === "year") {
+      granularity = "yearly";
+    }
+    return corr.tGranularity === granularity;
+  });
+
   return (
     <div className={styles.Page}>
       <div className={styles.Lhs}>
@@ -207,8 +219,9 @@ export const AirQualityXTrafficIncidents = () => {
         />
       </div>
       <div className={styles.Rhs}>
+        <h3>Correlations</h3>
         <SimpleCorrelationDisplay
-          simpleCorrelationResults={simpleCorrelation}
+          simpleCorrelationResults={correlationForGranularity}
           loading={fetchStatuses.correlation}
         />
 

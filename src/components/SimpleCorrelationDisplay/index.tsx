@@ -52,7 +52,6 @@ export const SimpleCorrelationDisplay = ({
       <div className={styles.Header}>
         <span>Column 1</span>
         <span>Column 2</span>
-        <span>Score</span>
         <span>Correlation</span>
         <span>P-value</span>
       </div>
@@ -64,9 +63,6 @@ export const SimpleCorrelationDisplay = ({
             </span>
             <span className={styles.CorrelationValue}>
               {correlation.COLUMN2}
-            </span>
-            <span className={styles.CorrelationValue}>
-              {correlation.Score.toPrecision(3)}
             </span>
             <span className={styles.CorrelationValue}>
               {correlation.CORRELATION.toPrecision(3)}

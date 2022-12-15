@@ -10,15 +10,12 @@ function App() {
   return (
     <div className="App">
       <nav className="Routes">
-        <Link to="/">Map</Link>
-        <Link to="/airQuality-trafficIncidents">Air Quality x Incidents</Link>
+        <Link to="/">Ghg Emissions</Link>
+        <Link to="/comparisons">Comparisons</Link>
       </nav>
       <Routes>
         <Route path="/" element={<CosEmissionsMap />} />
-        <Route
-          path="/airQuality-trafficIncidents"
-          element={<AirQualityXTrafficIncidents />}
-        />
+        <Route path="/comparisons" element={<AirQualityXTrafficIncidents />} />
       </Routes>
     </div>
   );

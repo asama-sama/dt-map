@@ -39,16 +39,18 @@ const CategoryToggles = ({
   categories,
   toggleCategory,
   row,
+  className,
 }: {
   categories: CategoryInput[];
   toggleCategory: (name: string) => void;
   row?: boolean;
+  className?: string;
 }) => {
   return (
     <div
       className={`${styles.CategoryToggleGroup} ${
         row && styles.CategoryToggleGroupRow
-      }`}
+      } ${className}`}
     >
       {categories.map(({ category, on }) => (
         <div className={styles.CategoryToggle} key={category}>
@@ -229,6 +231,8 @@ export const CategorySumsLineGraph = ({
 
   return (
     <div className={styles.CategorySumsLineGraph}>
+      <div className={styles.Linebreak}></div>
+      <h3>Readings</h3>
       <Line
         options={chartOptions}
         data={{
@@ -251,26 +255,40 @@ export const CategorySumsLineGraph = ({
           ],
         }}
       ></Line>
+      <div className={styles.Linebreak}></div>
       <h3>Categories</h3>
       <div className={styles.CategoryToggles}>
-        <CategoryToggles
-          categories={categories1}
-          toggleCategory={toggleCategory1}
-        />
-        <CategoryToggles
-          categories={categories2}
-          toggleCategory={toggleCategory2}
-        />
+        <div className={styles.CategoryTogglePane}>
+          <p className={`${styles.CategoryToggleLabel} `}>{label1}</p>
+          <CategoryToggles
+            categories={categories1}
+            toggleCategory={toggleCategory1}
+          />
+        </div>
+        <div className={styles.VerticalLine}>
+          <div></div>
+        </div>
+        <div className={styles.CategoryTogglePane}>
+          <p className={styles.CategoryToggleLabel}>{label2}</p>
+          <CategoryToggles
+            categories={categories2}
+            toggleCategory={toggleCategory2}
+          />
+        </div>
       </div>
+      <div className={styles.Linebreak}></div>
       <h3>Aggregation</h3>
-      <CategoryToggles
-        row={true}
-        categories={aggregationToggles}
-        toggleCategory={(cat) => {
-          if (cat !== "day" && cat !== "month" && cat !== "year") return;
-          setAggregation(cat);
-        }}
-      ></CategoryToggles>
+      <div className={styles.CenterChildren}>
+        <CategoryToggles
+          row={true}
+          categories={aggregationToggles}
+          toggleCategory={(cat) => {
+            if (cat !== "day" && cat !== "month" && cat !== "year") return;
+            setAggregation(cat);
+          }}
+        ></CategoryToggles>
+      </div>
+      <div className={styles.Linebreak}></div>
       <h3>Date Range</h3>
       <div className={styles.dateSliderContainer}>
         <Slider {...sliderProps} range onAfterChange={onSliderChange} />

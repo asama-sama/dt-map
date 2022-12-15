@@ -63,15 +63,15 @@ const MapControls = ({ setRectangle }: MapControlsProps) => {
         }`}
         onClick={() => startDrawRectangle()}
       ></div>
-      {currentRectangle && drawRectangle && (
-        <Rectangle
-          bounds={currentRectangle}
-          pathOptions={{ color: "lime", fillColor: "none" }}
-        />
+      {currentRectangle && (
+        <Rectangle bounds={currentRectangle} pathOptions={{ color: "lime" }} />
       )}
     </>
   );
 };
+
+const selection1Color = "rgb(15, 192, 192)";
+const selection2Color = "rgb(150, 10, 10)";
 
 const PointMarkers = ({
   geoData,
@@ -87,12 +87,12 @@ const PointMarkers = ({
     selected: string;
   };
   const selection1Colors: SelectionColors = {
-    unselected: "#212af7",
+    unselected: selection1Color,
     selected: "#2dffe6",
   };
 
   const selection2Colors: SelectionColors = {
-    unselected: "#c1a3f6", //#00735f
+    unselected: selection2Color, //#00735f
     selected: "#ff8181",
   };
   let selectionColors: SelectionColors;
@@ -111,7 +111,7 @@ const PointMarkers = ({
           geoData.geometry.coordinates[1],
           geoData.geometry.coordinates[0],
         ]}
-        radius={2}
+        radius={3}
         pathOptions={{
           color: idInRect
             ? selectionColors.selected
@@ -131,14 +131,21 @@ const PointMarkers = ({
 const PolygonBoundaries = ({
   geoData,
   selectedIds,
+  selection,
 }: {
   geoData: GeoDataPolygon[];
   selectedIds: IdExistsMap;
+  selection: 1 | 2;
 }) => {
   const suburbGeo = geoData.map((geoDataPolygon) => {
     let color = `#a6a6a6`;
     if (selectedIds[geoDataPolygon.id]) {
-      color = "#ffed32";
+      if (selection === 1) {
+        color = selection1Color;
+      } else {
+        color = selection2Color;
+        // color = "#ffed32";
+      }
     }
     if (!geoDataPolygon.geometry) return <></>;
     return (
@@ -174,7 +181,11 @@ const mapElementForType = (
   } else if (type === "Polygon") {
     const geoDataPolygons = geoData as GeoDataPolygon[];
     return (
-      <PolygonBoundaries geoData={geoDataPolygons} selectedIds={selectedIds} />
+      <PolygonBoundaries
+        geoData={geoDataPolygons}
+        selectedIds={selectedIds}
+        selection={selection}
+      />
     );
   }
 };
@@ -227,8 +238,8 @@ export const SitesAndBoundariesMap = ({
 
   return (
     <MapContainer
-      center={[-33.879, 151]}
-      zoom={10}
+      center={[-33.879, 151.1]}
+      zoom={11}
       scrollWheelZoom={false}
       style={{ height: "100%", width: "100%", position: "absolute" }}
       className={styles.siteAndBoundariesMap}

@@ -1,10 +1,11 @@
 .CategoryToggles {
   display: flex;
+  /* grid-template-columns: repeat(2, 1fr); */
+  justify-content: space-between;
 }
 
-.CategoryToggleGroup {
-  width: 50%;
-  justify-content: space-around;
+.CategoryTogglePane {
+  flex-grow: 1;
 }
 
 .CategoryToggleGroup {
@@ -12,6 +13,8 @@
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: 30px;
   font-size: 12px;
+  width: 70%;
+  margin: 0 auto;
 }
 
 .CategoryToggle {
@@ -25,6 +28,12 @@
   margin-left: 10px;
 }
 
+.CategoryToggleLabel {
+  font-weight: bold;
+  margin: 0;
+  margin-bottom: 5px;
+}
+
 .dateSliderContainer {
   padding-left: 40px;
   padding-right: 40px;
@@ -33,4 +42,31 @@
 .CategoryToggleGroupRow {
   display: flex;
   margin: 0 auto;
+  justify-content: center;
+}
+
+.Linebreak {
+  border-top: 1px solid white;
+  margin: 10px auto;
+  width: 80%;
+  align-self: center;
+}
+
+.CenterChildren {
+  display: flex;
+  justify-content: center;
+}
+
+.VerticalLine {
+  width: 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 0;
+  flex-basis: auto;
+}
+
+.VerticalLine div {
+  height: 75%;
+  border-right: 1px solid #636363;
 }
