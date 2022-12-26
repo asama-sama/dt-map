@@ -7,11 +7,13 @@ import styles from "./SimpleCorrelationDisplay.module.css";
 type SimpleCorrelationDisplayArgs = {
   simpleCorrelationResults: SimpleCorrelationResult[];
   loading: boolean;
+  getCorrelations: () => void;
 };
 
 export const SimpleCorrelationDisplay = ({
   simpleCorrelationResults,
   loading,
+  getCorrelations,
 }: SimpleCorrelationDisplayArgs) => {
   const correlations = useMemo(() => {
     const correlations = simpleCorrelationResults.sort((a, b) => {
@@ -22,10 +24,6 @@ export const SimpleCorrelationDisplay = ({
     });
     return correlations.slice(0, 5);
   }, [simpleCorrelationResults]);
-
-  if (correlations.length === 0 && !loading) {
-    return <div>Select a region to get correlations</div>;
-  }
 
   if (loading) {
     return (
@@ -48,31 +46,45 @@ export const SimpleCorrelationDisplay = ({
   }
 
   return (
-    <div className={styles.SimpleCorrelationDisplay}>
-      <div className={styles.Header}>
-        <span>Column 1</span>
-        <span>Column 2</span>
-        <span>Correlation</span>
-        <span>P-value</span>
-      </div>
-      {correlations.map((correlation, i) => {
-        return (
-          <div key={`corr-${i}`} className={styles.CorrelationResult}>
-            <span className={styles.CorrelationValue}>
-              {correlation.COLUMN1}
-            </span>
-            <span className={styles.CorrelationValue}>
-              {correlation.COLUMN2}
-            </span>
-            <span className={styles.CorrelationValue}>
-              {correlation.CORRELATION.toPrecision(3)}
-            </span>
-            <span className={styles.CorrelationValue}>
-              {correlation.Pvalue.toPrecision(3)}
-            </span>
+    <div>
+      {correlations.length === 0 && !loading ? (
+        <div>
+          <div>No correlations found</div>
+          <button
+            className={styles.GetCorrelationsButton}
+            onClick={getCorrelations}
+          >
+            Get correlations
+          </button>
+        </div>
+      ) : (
+        <div className={styles.SimpleCorrelationDisplay}>
+          <div className={styles.Header}>
+            <span>DS1 Category</span>
+            <span>DS2 Category</span>
+            <span>Correlation</span>
+            <span>P-value</span>
           </div>
-        );
-      })}
+          {correlations.map((correlation, i) => {
+            return (
+              <div key={`corr-${i}`} className={styles.CorrelationResult}>
+                <span className={styles.CorrelationValue}>
+                  {correlation.COLUMN1}
+                </span>
+                <span className={styles.CorrelationValue}>
+                  {correlation.COLUMN2}
+                </span>
+                <span className={styles.CorrelationValue}>
+                  {correlation.CORRELATION.toPrecision(3)}
+                </span>
+                <span className={styles.CorrelationValue}>
+                  {correlation.Pvalue.toPrecision(3)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

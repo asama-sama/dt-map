@@ -10,7 +10,7 @@ function App() {
   return (
     <div className="App">
       <nav className="Routes">
-        <Link to="/">Ghg Emissions</Link>
+        <Link to="/">Single Source</Link>
         <Link to="/comparisons">Comparisons</Link>
       </nav>
       <Routes>

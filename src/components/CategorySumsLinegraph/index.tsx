@@ -231,7 +231,6 @@ export const CategorySumsLineGraph = ({
 
   return (
     <div className={styles.CategorySumsLineGraph}>
-      <div className={styles.Linebreak}></div>
       <h3>Readings</h3>
       <Line
         options={chartOptions}
@@ -255,6 +254,24 @@ export const CategorySumsLineGraph = ({
           ],
         }}
       ></Line>
+
+      <div className={styles.Linebreak}></div>
+      <h3>Date Range</h3>
+      <div className={styles.dateSliderContainer}>
+        <Slider {...sliderProps} range onAfterChange={onSliderChange} />
+      </div>
+      <div className={styles.Linebreak}></div>
+      <h3>Aggregation</h3>
+      <div className={styles.CenterChildren}>
+        <CategoryToggles
+          row={true}
+          categories={aggregationToggles}
+          toggleCategory={(cat) => {
+            if (cat !== "day" && cat !== "month" && cat !== "year") return;
+            setAggregation(cat);
+          }}
+        ></CategoryToggles>
+      </div>
       <div className={styles.Linebreak}></div>
       <h3>Categories</h3>
       <div className={styles.CategoryToggles}>
@@ -275,23 +292,6 @@ export const CategorySumsLineGraph = ({
             toggleCategory={toggleCategory2}
           />
         </div>
-      </div>
-      <div className={styles.Linebreak}></div>
-      <h3>Aggregation</h3>
-      <div className={styles.CenterChildren}>
-        <CategoryToggles
-          row={true}
-          categories={aggregationToggles}
-          toggleCategory={(cat) => {
-            if (cat !== "day" && cat !== "month" && cat !== "year") return;
-            setAggregation(cat);
-          }}
-        ></CategoryToggles>
-      </div>
-      <div className={styles.Linebreak}></div>
-      <h3>Date Range</h3>
-      <div className={styles.dateSliderContainer}>
-        <Slider {...sliderProps} range onAfterChange={onSliderChange} />
       </div>
     </div>
   );

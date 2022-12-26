@@ -14,9 +14,11 @@
 
 .Rhs {
   grid-column: 2;
-  overflow-y: auto;
+  overflow-y: hidden;
   padding: 10px;
   padding-top: 30px;
+  display: flex;
+  flex-direction: column;
 }
 
 .Overlay {
@@ -26,4 +28,15 @@
   width: 100%;
   display: flex;
   justify-content: center;
+}
+
+.Graph {
+  overflow-y: auto;
+}
+
+.Linebreak {
+  border-top: 1px solid white;
+  margin: 10px auto;
+  width: 80%;
+  align-self: center;
 }

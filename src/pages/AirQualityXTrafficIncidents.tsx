@@ -48,6 +48,7 @@ export const AirQualityXTrafficIncidents = () => {
   const [dataSource1, setDataSource1] = useState<string>("airQuality");
   const [dataSource2, setDataSource2] = useState<string>("trafficIncidents");
   const [selectedRectangle, setSelectedRectangle] = useState<Rectangle>();
+  const [currentRectangle, setCurrentRectangle] = useState<Rectangle>();
   const [simpleCorrelation, setSimpleCorrelation] = useState<
     SimpleCorrelationResult[]
   >([]);
@@ -65,6 +66,7 @@ export const AirQualityXTrafficIncidents = () => {
     setSelectedDs1PreIds({});
     setSelectedDs2PreIds({});
     setSelectedRectangle(undefined);
+    setCurrentRectangle(undefined);
     setSimpleCorrelation([]);
   };
 
@@ -120,26 +122,27 @@ export const AirQualityXTrafficIncidents = () => {
   }, [selectedDs2PreElements, aggregation, selectedDateRangeState]);
 
   useEffect(() => {
-    const runSimpleCorrelation = async (selectedRectangle: Rectangle) => {
-      const ds1 = API_CORRELATION_MAP[dataSource1];
-      const ds2 = API_CORRELATION_MAP[dataSource2];
-      const { startDate, endDate } = selectedDateRangeState.get();
-      const polygon = polygonFromRectangle(selectedRectangle);
-      const polygonString = polygonToString(polygon);
-      const res = await getSimpleCorrelation(
-        ds1,
-        ds2,
-        startDate,
-        endDate,
-        polygonString
-      );
-      setSimpleCorrelation(res);
-      fetchStatusesState.merge(() => ({ correlation: false }));
-    };
+    setSimpleCorrelation([]);
+  }, [selectedDateRangeState, selectedRectangle]);
+
+  const runSimpleCorrelation = async () => {
     if (!selectedRectangle) return;
     fetchStatusesState.merge(() => ({ correlation: true }));
-    runSimpleCorrelation(selectedRectangle);
-  }, [selectedRectangle, selectedDateRangeState]);
+    const ds1 = API_CORRELATION_MAP[dataSource1];
+    const ds2 = API_CORRELATION_MAP[dataSource2];
+    const { startDate, endDate } = selectedDateRangeState.get();
+    const polygon = polygonFromRectangle(selectedRectangle);
+    const polygonString = polygonToString(polygon);
+    const res = await getSimpleCorrelation(
+      ds1,
+      ds2,
+      startDate,
+      endDate,
+      polygonString
+    );
+    setSimpleCorrelation(res);
+    fetchStatusesState.merge(() => ({ correlation: false }));
+  };
 
   const getLabels = (startDate: Date, endDate: Date) => {
     const labels: string[] = [];
@@ -182,15 +185,16 @@ export const AirQualityXTrafficIncidents = () => {
 
   const fetchStatuses = fetchStatusesState.get();
 
+  let granularity = "";
+  if (aggregation === "day") {
+    granularity = "daily";
+  } else if (aggregation === "month") {
+    granularity = "monthly";
+  } else if (aggregation === "year") {
+    granularity = "yearly";
+  }
+
   const correlationForGranularity = simpleCorrelation.filter((corr) => {
-    let granularity;
-    if (aggregation === "day") {
-      granularity = "daily";
-    } else if (aggregation === "month") {
-      granularity = "monthly";
-    } else if (aggregation === "year") {
-      granularity = "yearly";
-    }
     return corr.tGranularity === granularity;
   });
 
@@ -213,32 +217,39 @@ export const AirQualityXTrafficIncidents = () => {
           dataSource2PreData={globalState[dataSource2].preData.get()}
           selectedDs2PreIds={selectedDs2PreElements}
           selectedDs1PreIds={selectedDs1PreIds}
+          selectedRectangle={selectedRectangle}
+          currentRectangle={currentRectangle}
           setSelectedDs2PreIds={setSelectedDs2PreIds}
           setSelectedDs1PreIds={setSelectedDs1PreIds}
           setSelectedRectangle={setSelectedRectangle}
+          setCurrentRectangle={setCurrentRectangle}
         />
       </div>
       <div className={styles.Rhs}>
-        <h3>Correlations</h3>
+        <h3>Correlations ({granularity})</h3>
         <SimpleCorrelationDisplay
           simpleCorrelationResults={correlationForGranularity}
           loading={fetchStatuses.correlation}
+          getCorrelations={runSimpleCorrelation}
         />
 
+        <div className={styles.Linebreak}></div>
         {dataSource1State.promised || dataSource2State.promised ? (
           <div>Loading...</div>
         ) : (
-          <CategorySumsLineGraph
-            dataSet1={dataSource1State.get()}
-            dataSet2={dataSource2State.get()}
-            label1={dataSource1}
-            label2={dataSource2}
-            sliderLabels={sliderLabels}
-            graphLabels={graphLabels}
-            aggregation={aggregation}
-            setAggregation={setAggregation}
-            selectedDateRangeState={selectedDateRangeState}
-          />
+          <div className={styles.Graph}>
+            <CategorySumsLineGraph
+              dataSet1={dataSource1State.get()}
+              dataSet2={dataSource2State.get()}
+              label1={dataSource1}
+              label2={dataSource2}
+              sliderLabels={sliderLabels}
+              graphLabels={graphLabels}
+              aggregation={aggregation}
+              setAggregation={setAggregation}
+              selectedDateRangeState={selectedDateRangeState}
+            />
+          </div>
         )}
       </div>
     </div>

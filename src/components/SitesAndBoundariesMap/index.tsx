@@ -20,13 +20,18 @@ import { getGeoType, getSelectedGeometries } from "../../util/geometry";
 
 type SetRectangleFn = (rectangle: RectangleData | undefined) => void;
 type MapControlsProps = {
+  currentRectangle: RectangleData | undefined;
+  setCurrentRectangle: (currentRectangle: RectangleData | undefined) => void;
   setRectangle: SetRectangleFn;
 };
 
-const MapControls = ({ setRectangle }: MapControlsProps) => {
+const MapControls = ({
+  currentRectangle,
+  setCurrentRectangle,
+  setRectangle,
+}: MapControlsProps) => {
   const [point1, setPoint1] = useState<LatLngArray>();
   const [drawRectangle, setDrawRectangle] = useState(false);
-  const [currentRectangle, setCurrentRectangle] = useState<RectangleData>();
   useMapEvents({
     click(e) {
       if (!drawRectangle) return;
@@ -195,38 +200,47 @@ export const SitesAndBoundariesMap = ({
   dataSource2PreData,
   selectedDs2PreIds,
   selectedDs1PreIds,
+  selectedRectangle,
   setSelectedDs2PreIds,
   setSelectedDs1PreIds,
   setSelectedRectangle,
+  currentRectangle,
+  setCurrentRectangle,
 }: {
   dataSource1PreData: GeoData[];
   dataSource2PreData: GeoData[];
   selectedDs2PreIds: IdExistsMap;
   selectedDs1PreIds: IdExistsMap;
+  selectedRectangle: RectangleData | undefined;
+  currentRectangle: RectangleData | undefined;
   setSelectedDs2PreIds: (suburbs: IdExistsMap) => void;
   setSelectedDs1PreIds: (sites: IdExistsMap) => void;
-  setSelectedRectangle: (rectangle: RectangleData) => void;
+  setSelectedRectangle: (rectangle: RectangleData | undefined) => void;
+  setCurrentRectangle: (currentRectangle: RectangleData | undefined) => void;
 }) => {
-  const [rectangle, setRectangle] = useState<RectangleData>();
+  // const [rectangle, setRectangle] = useState<RectangleData>();
 
   useEffect(() => {
-    if (!rectangle) {
+    if (!selectedRectangle) {
       setSelectedDs1PreIds({});
       setSelectedDs2PreIds({});
       return;
     }
 
-    setSelectedRectangle(rectangle);
+    // setSelectedRectangle(selectedRectangle);
 
     const selectedDs2PreIds = getSelectedGeometries(
-      rectangle,
+      selectedRectangle,
       dataSource2PreData
     );
     setSelectedDs2PreIds(selectedDs2PreIds);
 
-    const selectedSites = getSelectedGeometries(rectangle, dataSource1PreData);
+    const selectedSites = getSelectedGeometries(
+      selectedRectangle,
+      dataSource1PreData
+    );
     setSelectedDs1PreIds(selectedSites);
-  }, [rectangle]);
+  }, [selectedRectangle]);
 
   const ds1ElementsMemo = useMemo(() => {
     if (!selectedDs1PreIds) return <></>;
@@ -248,7 +262,11 @@ export const SitesAndBoundariesMap = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapControls setRectangle={setRectangle} />
+      <MapControls
+        setRectangle={setSelectedRectangle}
+        currentRectangle={currentRectangle}
+        setCurrentRectangle={setCurrentRectangle}
+      />
       {ds2ElementsMemo}
       {ds1ElementsMemo}
     </MapContainer>

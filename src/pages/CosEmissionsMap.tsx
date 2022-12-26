@@ -139,7 +139,7 @@ export const CosEmissionsMap = () => {
     <div className="MapContainer">
       <MapComponent
         suburbs={suburbsWithDataNormalised}
-        selectedSuburb={selectedSuburb}
+        selectedSuburb={undefined}
       />
       <div className={"CategoryToggles"}>
         <h3>Categories</h3>
@@ -148,8 +148,8 @@ export const CosEmissionsMap = () => {
           setToggleInputs={setCategoryToggles}
         />
         <div>
-          <h3>Aggregation</h3>
-          <label>
+          <h3>Temporal</h3>
+          <label className="PadRight">
             Aggregate
             <input
               type="radio"
@@ -167,9 +167,10 @@ export const CosEmissionsMap = () => {
               checked={dataView === "yearly"}
             ></input>
           </label>
+          <h3>Rank</h3>
           <div>
             {sortToggles.map((toggle, i) => (
-              <span key={`sortToggle-${i}`}>
+              <span key={`sortToggle-${i}`} className="PadRight">
                 <label htmlFor={toggle.name}>{toggle.name}</label>
                 <input
                   type={"radio"}
