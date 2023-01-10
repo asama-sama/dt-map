@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import { Map as MapComponent } from "../components/Map";
 import { getSuburbsForApi } from "../requests/suburbs";
-import { SuburbsIndexed, Api, SuburbWithMapData } from "../types";
+import { Api, SuburbWithMapData } from "../types";
 import { applyRange, NonNormalisedData } from "../util";
 import { colorSuburb } from "../util/colorSuburb";
 import { getAirQualityMonthly } from "../requests/airQuality";
@@ -17,6 +17,13 @@ import {
 import "leaflet/dist/leaflet.css";
 import "rc-slider/assets/index.css";
 import "./MapAirQuality.css";
+
+type SuburbsIndexed = {
+  [key: number]: {
+    id: number;
+    name: string;
+  };
+};
 
 type AirQualityData = {
   [key: string]: {

@@ -3,8 +3,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { getEmissionsByCategory } from "../requests/categories";
-import { Category, Emission } from "../types";
+import { Emission } from "../types";
 import "./Categories.css";
+
+type Category = {
+  id: number;
+  name: string;
+};
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

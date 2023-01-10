@@ -12,15 +12,20 @@ import {
 import { Line } from "react-chartjs-2";
 import Color from "colorjs.io";
 import { getYearlyEmissionsBySuburb } from "../requests/suburbs";
-import {
-  Emission,
-  EmissionsBySuburb,
-  SuburbsIndexed,
-  Category,
-  InputToggle,
-} from "../types";
+import { Emission, EmissionsBySuburb, InputToggle } from "../types";
 import { Toggles } from "../components/Toggles";
 import "./Yearly.css";
+
+type Category = {
+  id: number;
+  name: string;
+};
+type SuburbsIndexed = {
+  [key: number]: {
+    id: number;
+    name: string;
+  };
+};
 
 type SortOptions = "high" | "low";
 type SuburbColors = {

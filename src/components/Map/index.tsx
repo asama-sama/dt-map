@@ -19,10 +19,11 @@ const GeoLayer = ({
     ref?.bindPopup(suburb.name);
     ref?.openPopup();
   }
-
+  const boundary = suburb.boundary;
+  if (!boundary) return <></>;
   return (
     <GeoJSON
-      data={suburb.boundary}
+      data={boundary}
       style={{ color: colorSuburb(suburb.readingNormalised) }}
       onEachFeature={(feature, layer) => {
         layer.bindPopup(
@@ -65,15 +66,18 @@ export const Map = ({
         .sort((s1, s2) => s1.id - s2.id)
         .map((suburb) => {
           const active = suburb.id === selectedSuburb;
-          return Object.keys(suburb.boundary).map((suburbName) => {
-            return (
-              <GeoLayer
-                suburb={suburb}
-                key={`${suburbName},${suburb.id}`}
-                active={active}
-              />
-            );
-          });
+          return (
+            suburb.boundary &&
+            Object.keys(suburb.boundary).map((suburbName) => {
+              return (
+                <GeoLayer
+                  suburb={suburb}
+                  key={`${suburbName},${suburb.id}`}
+                  active={active}
+                />
+              );
+            })
+          );
         })}
       {stations &&
         trafficCounts &&

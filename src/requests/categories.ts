@@ -1,5 +1,9 @@
-import { Category, Emission } from "../types";
+import { Emission } from "../types";
 const { VITE_SERVER_URL } = import.meta.env;
+
+type Category = {
+  name: string;
+};
 
 export const getCategories = async () => {
   const res = await fetch(`${VITE_SERVER_URL}/categories`);
