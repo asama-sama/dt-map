@@ -41,7 +41,7 @@
 }
 .Routes {
   position: fixed;
-  top: 0;
+  bottom: 0;
   right: 0px;
   z-index: 100000;
   width: 230px;
@@ -55,4 +55,15 @@
 
 h3 {
   margin: 5px;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner {
+  background: #ff7171;
+  height: 24px;
+  width: 100%;
 }
