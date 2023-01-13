@@ -213,7 +213,7 @@ export const CategorySumsLineGraph = ({
     },
   };
 
-  const aggregationToggles = ["day", "month", "year"].map((str) => ({
+  const aggregationToggles = ["day", "month"].map((str) => ({
     category: str,
     on: str === aggregation ? true : false,
   }));
@@ -229,6 +229,8 @@ export const CategorySumsLineGraph = ({
     });
   };
 
+  const activeCategory1 = categories1.find((category) => category.on)?.category;
+  const activeCategory2 = categories2.find((category) => category.on)?.category;
   return (
     <div className={styles.CategorySumsLineGraph}>
       <h3>Readings</h3>
@@ -241,14 +243,14 @@ export const CategorySumsLineGraph = ({
               data: values1,
               borderColor: "rgb(15, 192, 192)",
               tension: 0.5,
-              label: label1,
+              label: activeCategory1 !== "ALL" ? activeCategory1 : label1,
               yAxisID: "y",
             },
             {
               data: values2,
               borderColor: "rgb(150, 10, 10)",
               tension: 0.5,
-              label: label2,
+              label: activeCategory2 !== "ALL" ? activeCategory2 : label2,
               yAxisID: "y2",
             },
           ],

@@ -1,4 +1,5 @@
 import { InputToggle } from "../../types";
+import styles from "./Toggles.module.css";
 
 export const Toggles = ({
   toggleInputs,
@@ -11,7 +12,11 @@ export const Toggles = ({
     <div>
       {toggleInputs.map((toggleInput, i) => (
         <div key={`toggle-${i}`} className="Selection">
-          <label key={`cat-${i}`} htmlFor={`toggle-${i}`}>
+          <label
+            key={`cat-${i}`}
+            htmlFor={`toggle-${i}`}
+            className={styles.ToggleLabel}
+          >
             {toggleInput.name}
           </label>
           <input
